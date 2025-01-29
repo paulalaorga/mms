@@ -1,11 +1,10 @@
 import NextAuth, { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import GoogleProvider from "next-auth/providers/google";
-import bcrypt from "bcryptjs";
 import { connectDB } from "@/lib/mongodb";
 import User from "@/models/User";
 
-export const authOptions: NextAuthOptions = ({
+export const authOptions: NextAuthOptions = {
   providers: [
     // Login con Google
     GoogleProvider({
@@ -26,7 +25,7 @@ export const authOptions: NextAuthOptions = ({
         }
 
         await connectDB();
-        const user = await User.findOne({ email: credentials?.email });
+        const user = await User.findOne({ email: credentials.email });
 
         if (!user) {
           throw new Error("Usuario no encontrado");
@@ -36,10 +35,10 @@ export const authOptions: NextAuthOptions = ({
           throw new Error("Usa otro método de inicio de sesión");
         }
 
-        const validPassword = await bcrypt.compare(credentials.password, user.password);
-        if (!validPassword) {
+        if (credentials.password !== user.password) {
           throw new Error("Contraseña incorrecta");
         }
+        
 
         return { id: user._id.toString(), name: user.name, email: user.email, role: user.role };
       },
@@ -52,17 +51,17 @@ export const authOptions: NextAuthOptions = ({
   
       if (dbUser) {
         session.user.id = dbUser._id.toString();
-        session.user.role = dbUser.role;  // Agregar el rol del usuario a la sesión
+        session.user.role = dbUser.role || "user"; // Asegurar que `role` exista
       }
   
       return session;
-    },
+    }
   },
-  
   pages: {
     signIn: "/login",
+    newUser: "/profile",
   },
-});
+};
 
 const handler = NextAuth(authOptions);
 

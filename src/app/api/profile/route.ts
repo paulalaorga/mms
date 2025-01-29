@@ -1,7 +1,6 @@
 import { connectDB } from "@/lib/mongodb";
 import User from "@/models/User";
 import { getServerSession } from "next-auth";
-import bcrypt from "bcryptjs";
 import { NextResponse } from "next/server";
 import { authOptions } from "../auth/[...nextauth]/route";
 
@@ -18,7 +17,7 @@ export async function PUT(req: Request) {
 
 
   if (name) updates.name = name;
-  if (password) updates.password = await bcrypt.hash(password, 10);
+  if (password) updates.password = password;
 
   const updatedUser = await User.findOneAndUpdate(
     { email: session.user.email },
