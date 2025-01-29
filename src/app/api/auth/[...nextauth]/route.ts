@@ -20,6 +20,7 @@ export const authOptions: NextAuthOptions = {
         password: { label: "Password", type: "password" },
       },
       async authorize(credentials) {
+        try {
         if (!credentials?.email || !credentials?.password) {
           throw new Error("Falta el correo o la contraseña");
         }
@@ -41,11 +42,16 @@ export const authOptions: NextAuthOptions = {
         
 
         return { id: user._id.toString(), name: user.name, email: user.email, role: user.role };
+      } catch (error) {
+        console.error("Error en login:", error instanceof Error ? error.message : error);
+        throw new Error(error instanceof Error ? error.message : "Ocurrió un error desconocido.");
+        }
       },
     }),
   ],
   callbacks: {
     async session({ session }) {
+      try {
       await connectDB();
       const dbUser = await User.findOne({ email: session.user.email });
   
@@ -55,12 +61,16 @@ export const authOptions: NextAuthOptions = {
       }
   
       return session;
+    } catch (error) {
+      console.error("Error en session callback:", error instanceof Error ? error.message : error);
+      return session;
+    }
     }
   },
   pages: {
     signIn: "/login",
     newUser: "/profile",
-  },
+  }, 
 };
 
 const handler = NextAuth(authOptions);
