@@ -1,11 +1,11 @@
-import NextAuth from "next-auth";
+import NextAuth, { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import GoogleProvider from "next-auth/providers/google";
 import bcrypt from "bcryptjs";
 import { connectDB } from "@/lib/mongodb";
 import User from "@/models/User";
 
-const handler = NextAuth({
+export const authOptions: NextAuthOptions = ({
   providers: [
     // Login con Google
     GoogleProvider({
@@ -41,7 +41,7 @@ const handler = NextAuth({
           throw new Error("Contraseña incorrecta");
         }
 
-        return { id: user._id, name: user.name, email: user.email };
+        return { id: user._id.toString(), name: user.name, email: user.email, role: user.role };
       },
     }),
   ],
@@ -63,5 +63,7 @@ const handler = NextAuth({
     signIn: "/login",
   },
 });
+
+const handler = NextAuth(authOptions);
 
 export { handler as GET, handler as POST };
