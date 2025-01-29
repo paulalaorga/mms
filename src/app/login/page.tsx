@@ -34,6 +34,12 @@ export default function LoginPage() {
           Iniciar sesión
         </button>
       </form>
+      <button
+          onClick={() => signIn("google")}
+          className="w-full bg-red-500 text-white p-2 rounded mb-2"
+        >
+          Iniciar sesión con Google
+        </button>
     </div>
   );
 }
