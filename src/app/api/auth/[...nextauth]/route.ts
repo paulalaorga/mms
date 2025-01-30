@@ -63,7 +63,11 @@ export const authOptions: NextAuthOptions = {
             role: "user",
           });
         }
-        return true;
+        if (dbUser.role === "admin") {
+          return "/admin"; // Redirigir a /admin si es administrador
+        }
+  
+        return "/profile"; // Usuarios normales van a /profile
       } catch (error) {
         console.error("Error en signIn callback:", error instanceof Error ? error.message : error);
         return false;
