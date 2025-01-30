@@ -28,6 +28,23 @@ export default function LoginPage() {
     }
   };
 
+  const handleGoogleSignIn = async () => {
+    console.log("Iniciando sesión con Google...");
+  
+    const res = await signIn("google", { redirect: false, callbackUrl: "/profile" });
+  
+    console.log("Google signIn response:", res);
+  
+    if (res?.error) {
+      console.error("Error en Google SignIn:", res.error);
+      setError(res.error);
+    } else {
+      console.log("Redirigiendo a:", res?.url);
+      router.push(res?.url || "/profile");
+    }
+  };
+  
+
   return (
     <div className="flex min-h-screen items-center justify-center">
       <div className="bg-white p-6 shadow-lg rounded-lg w-96">
@@ -36,7 +53,6 @@ export default function LoginPage() {
         {error && <p className="text-red-500 mb-4">{error}</p>}
 
       <form onSubmit={handleSubmit} className="bg-white p-6 shadow-lg rounded-lg">
-        <h1 className="text-2xl font-bold mb-4">Iniciar Sesión</h1>
         <input
           type="email"
           placeholder="Correo electrónico"
@@ -56,7 +72,7 @@ export default function LoginPage() {
         </button>
       </form>
       <button
-          onClick={() => signIn("google", { callbackUrl: "/profile" })}
+          onClick={handleGoogleSignIn}
           className="w-full bg-red-500 text-white p-2 rounded mb-2"
         >
           Iniciar sesión con Google

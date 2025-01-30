@@ -1,17 +1,29 @@
 "use client";
 
 import { useSession, signOut } from "next-auth/react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+
 
 export default function ProfilePage() {
   const { data: session, status, update } = useSession();
+  const router = useRouter();
   const [name, setName] = useState(session?.user?.name || "");
   const [password, setPassword] = useState("");
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
+  
+  useEffect(() => {
+    if (status === "loading") return;
+
+    if (!session) {
+      router.push("/login");
+    } else if (session.user.role === "admin") {
+      router.push("/admin");
+    }
+  }, [session, status, router]);
 
   if (status === "loading") return <p>Cargando...</p>;
-  if (!session)return <p>No estás autenticado. <a href="/login">Iniciar sesión</a></p>;
   
   const handleUpdate = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -39,8 +51,8 @@ export default function ProfilePage() {
     <div className="flex flex-col items-center justify-center min-h-screen">
       <div className="bg-white p-6 shadow-lg rounded-lg w-96">
         <h1 className="text-2xl font-bold">Perfil</h1>
-        <p><strong>Email:</strong> {session.user.email}</p>
-        <p><strong>Rol:</strong> {session.user?.role || "Usuario"}</p>
+        <p><strong>Email:</strong> {session?.user?.email}</p>
+        <p><strong>Rol:</strong> {session?.user?.role || "Usuario"}</p>
 
         <form onSubmit={handleUpdate} className="mt-4">
           <label className="block mb-2">Nombre:</label>

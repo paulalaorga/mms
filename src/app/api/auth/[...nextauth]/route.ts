@@ -39,7 +39,8 @@ export const authOptions: NextAuthOptions = {
         if (credentials.password !== user.password) {
           throw new Error("Contraseña incorrecta");
         }
-        
+
+
 
         return { id: user._id.toString(), name: user.name, email: user.email, role: user.role };
       } catch (error) {
@@ -63,7 +64,8 @@ export const authOptions: NextAuthOptions = {
             role: "user",
           });
         }
-        return true;
+  
+        return true; 
       } catch (error) {
         console.error("Error en signIn callback:", error instanceof Error ? error.message : error);
         return false;
@@ -85,12 +87,28 @@ export const authOptions: NextAuthOptions = {
       console.error("Error en session callback:", error instanceof Error ? error.message : error);
       return session;
     }
+    },
+
+    async redirect({ url, baseUrl }) {
+      console.log("Redirect URL:", url);
+      console.log("Base URL:", baseUrl);
+
+      if (!url) {
+        console.warn("⚠️ `url` es undefined. Redirigiendo a baseUrl...");
+        return baseUrl;
+      }
+    try {
+      const parsedUrl = new URL(url);
+      return parsedUrl.origin === baseUrl ? url : baseUrl;
+    } catch (error) {
+      console.error("Error en redirect callback:", error instanceof Error ? error.message : error);
+      return baseUrl;
     }
+  }
   },
   pages: {
     signIn: "/login",
-    newUser: "/profile",
-  }, 
+  } 
 };
 
 const handler = NextAuth(authOptions);
