@@ -50,6 +50,26 @@ export const authOptions: NextAuthOptions = {
     }),
   ],
   callbacks: {
+    async signIn ({ user }) {
+      try {
+        await connectDB();
+        let dbUser = await User.findOne({ email: user.email });
+
+        if (!dbUser) {
+          dbUser = await User.create({
+            email: user.email,
+            name: user.name,
+            image: user.image,
+            role: "user",
+          });
+        }
+        return true;
+      } catch (error) {
+        console.error("Error en signIn callback:", error instanceof Error ? error.message : error);
+        return false;
+      }
+    },  
+
     async session({ session }) {
       try {
       await connectDB();

@@ -56,7 +56,7 @@ export default function LoginPage() {
         </button>
       </form>
       <button
-          onClick={() => signIn("google")}
+          onClick={() => signIn("google", { callbackUrl: "/profile" })}
           className="w-full bg-red-500 text-white p-2 rounded mb-2"
         >
           Iniciar sesión con Google
