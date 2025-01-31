@@ -21,37 +21,57 @@ export const authOptions: NextAuthOptions = {
       },
       async authorize(credentials) {
         try {
-        if (!credentials?.email || !credentials?.password) {
-          throw new Error("Falta el correo o la contraseña");
-        }
+          if (!credentials?.email || !credentials?.password) {
+            throw new Error("Falta el correo o la contraseña");
+          }
 
-        await connectDB();
-        const user = await User.findOne({ email: credentials.email });
+          await connectDB();
+          const user = await User.findOne({ email: credentials.email });
 
-        if (!user) {
-          throw new Error("Usuario no encontrado");
-        }
+          if (!user) {
+            throw new Error("Usuario no encontrado");
+          }
 
-        if (!user.password) {
-          throw new Error("Usa otro método de inicio de sesión");
-        }
+          if (!user.password) {
+            throw new Error("Usa otro método de inicio de sesión");
+          }
 
-        if (credentials.password !== user.password) {
-          throw new Error("Contraseña incorrecta");
-        }
+          if (credentials.password !== user.password) {
+            throw new Error("Contraseña incorrecta");
+          }
 
-
-
-        return { id: user._id.toString(), name: user.name, email: user.email, role: user.role };
-      } catch (error) {
-        console.error("Error en login:", error instanceof Error ? error.message : error);
-        throw new Error(error instanceof Error ? error.message : "Ocurrió un error desconocido.");
+          return {
+            id: user._id.toString(),
+            name: user.name,
+            email: user.email,
+            role: user.role,
+          };
+        } catch (error) {
+          console.error(
+            "Error en login:",
+            error instanceof Error ? error.message : error
+          );
+          throw new Error(
+            error instanceof Error
+              ? error.message
+              : "Ocurrió un error desconocido."
+          );
         }
       },
     }),
   ],
+  cookies: {
+    state: {
+      name: "next-auth.state",
+      options: {
+        httpOnly: true,
+        sameSite: "lax",
+        path: "/",
+      },
+    },
+  },
   callbacks: {
-    async signIn ({ user }) {
+    async signIn({ user }) {
       try {
         await connectDB();
         let dbUser = await User.findOne({ email: user.email });
@@ -64,29 +84,35 @@ export const authOptions: NextAuthOptions = {
             role: "user",
           });
         }
-  
-        return true; 
+
+        return true;
       } catch (error) {
-        console.error("Error en signIn callback:", error instanceof Error ? error.message : error);
+        console.error(
+          "Error en signIn callback:",
+          error instanceof Error ? error.message : error
+        );
         return false;
       }
-    },  
+    },
 
     async session({ session }) {
       try {
-      await connectDB();
-      const dbUser = await User.findOne({ email: session.user.email });
-  
-      if (dbUser) {
-        session.user.id = dbUser._id.toString();
-        session.user.role = dbUser.role || "user"; // Asegurar que `role` exista
+        await connectDB();
+        const dbUser = await User.findOne({ email: session.user.email });
+
+        if (dbUser) {
+          session.user.id = dbUser._id.toString();
+          session.user.role = dbUser.role || "user"; // Asegurar que `role` exista
+        }
+
+        return session;
+      } catch (error) {
+        console.error(
+          "Error en session callback:",
+          error instanceof Error ? error.message : error
+        );
+        return session;
       }
-  
-      return session;
-    } catch (error) {
-      console.error("Error en session callback:", error instanceof Error ? error.message : error);
-      return session;
-    }
     },
 
     async redirect({ url, baseUrl }) {
@@ -97,18 +123,29 @@ export const authOptions: NextAuthOptions = {
         console.warn("⚠️ `url` es undefined. Redirigiendo a baseUrl...");
         return baseUrl;
       }
-    try {
-      const parsedUrl = new URL(url);
-      return parsedUrl.origin === baseUrl ? url : baseUrl;
-    } catch (error) {
-      console.error("Error en redirect callback:", error instanceof Error ? error.message : error);
-      return baseUrl;
-    }
-  }
-  },
+
+      if (url.startsWith("/")) {
+        return `${baseUrl}${url}`;
+      }
+
+      try {
+        const parsedUrl = new URL(url);
+        if (parsedUrl.origin === baseUrl) {
+          return url;
+        }
+
+      } catch (error) {
+        console.error(
+          "Error en redirect callback:",
+          error instanceof Error ? error.message : error
+        );
+      }
+        return baseUrl;
+      }
+    },
   pages: {
     signIn: "/login",
-  } 
+  }
 };
 
 const handler = NextAuth(authOptions);
