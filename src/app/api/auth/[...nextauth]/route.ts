@@ -116,36 +116,24 @@ export const authOptions: NextAuthOptions = {
     },
 
     async redirect({ url, baseUrl }) {
-      console.log("Redirect URL:", url);
-      console.log("Base URL:", baseUrl);
+      // Obtener la sesión actual
+      const session = await fetch(`${baseUrl}/api/auth/session`).then((res) =>
+        res.json()
+      );
 
-      if (!url) {
-        console.warn("⚠️ `url` es undefined. Redirigiendo a baseUrl...");
-        return baseUrl;
-      }
+      console.log("Redirigiendo usuario con rol:", session?.user?.role);
 
-      if (url.startsWith("/")) {
-        return `${baseUrl}${url}`;
-      }
-
-      try {
-        const parsedUrl = new URL(url);
-        if (parsedUrl.origin === baseUrl) {
-          return url;
-        }
-
-      } catch (error) {
-        console.error(
-          "Error en redirect callback:",
-          error instanceof Error ? error.message : error
-        );
-      }
-        return baseUrl;
+      // Redirigir según el rol del usuario
+      if (session?.user?.role === "admin") {
+        return `${baseUrl}/admin`;
+      } else {
+        return `${baseUrl}/user`;
       }
     },
+  },
   pages: {
     signIn: "/login",
-  }
+  },
 };
 
 const handler = NextAuth(authOptions);

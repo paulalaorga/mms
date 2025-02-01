@@ -5,14 +5,14 @@ import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { Heading, Text, Spinner } from "@chakra-ui/react";
 
-export default function AdminPage() {
+export default function UserProfile() {
   const { data: session, status } = useSession();
   const router = useRouter();
 
   useEffect(() => {
     if (status === "loading") return;
-    if (!session || session.user.role !== "admin") {
-      router.push("/profile");
+    if (!session) {
+      router.push("/login");
     }
   }, [session, status, router]);
 
@@ -22,8 +22,10 @@ export default function AdminPage() {
 
   return (
     <>
-      <Heading>Dashboard de Administrador</Heading>
-      <Text>Selecciona una opción en el menú lateral.</Text>
+      <Heading>Perfil de Usuario</Heading>
+      <Text>Bienvenido, {session?.user?.name}.</Text>
+      <Text>Email: {session?.user?.email}</Text>
+      <Text>Rol: {session?.user?.role}</Text>
     </>
   );
 }
