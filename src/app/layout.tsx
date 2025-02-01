@@ -1,13 +1,13 @@
 "use client";
 
-import { SessionProvider } from "next-auth/react";
-import { ReactNode } from "react";
+import { ChakraProvider } from "@chakra-ui/react";
+import theme from "@/theme"; // Importa el tema corregido
 
-export default function RootLayout({ children }: { children: ReactNode }) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="es">
       <body>
-        <SessionProvider>{children}</SessionProvider>
+        <ChakraProvider theme={theme}>{children}</ChakraProvider>
       </body>
     </html>
   );
