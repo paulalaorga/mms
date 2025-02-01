@@ -15,6 +15,7 @@ import {
   Text,
   Alert,
   AlertIcon,
+  Divider,
 } from "@chakra-ui/react";
 
 export default function LoginPage() {
@@ -36,32 +37,7 @@ export default function LoginPage() {
     if (res?.error) {
       setError(res.error);
     } else {
-      // Obtener el usuario autenticado con `getSession`
-      const session = await fetch("/api/auth/session").then((res) => res.json());
-  
-      console.log("Sesión actual:", session);
-  
-      if (session?.user?.role === "admin") {
-        router.push("/admin"); // Redirige a /admin si es administrador
-      } else {
-        router.push("/user"); // Redirige a /profile si es usuario normal
-      }
-    }
-  };
-
-  const handleGoogleSignIn = async () => {
-    console.log("Iniciando sesión con Google...");
-
-    const res = await signIn("google", { redirect: false, callbackUrl: "/user" });
-
-    console.log("Google signIn response:", res);
-
-    if (res?.error) {
-      console.error("Error en Google SignIn:", res.error);
-      setError(res.error);
-    } else {
-      console.log("Redirigiendo a:", res?.url);
-      router.push(res?.url || "/user");
+      router.push("/user/profile");
     }
   };
 
@@ -105,13 +81,11 @@ export default function LoginPage() {
             </Button>
           </form>
 
-          <Button
-            colorScheme="red"
-            w="100%"
-            mt={4}
-            onClick={handleGoogleSignIn}
-          >
-            Iniciar sesión con Google
+          <Divider />
+
+          <Text>¿No tienes una cuenta?</Text>
+          <Button colorScheme="green" w="100%" onClick={() => router.push("/register")}>
+            Registrarse
           </Button>
         </VStack>
       </Box>
