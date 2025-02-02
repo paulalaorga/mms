@@ -1,11 +1,29 @@
 "use client";
 
 import { ReactNode } from "react";
-import { Box, Flex, VStack, Link, Text, Button } from "@chakra-ui/react";
+import { Box, Flex, VStack, Link, Text, Button, Spinner } from "@chakra-ui/react";
 import NextLink from "next/link";
 import { signOut } from "next-auth/react";
+import { useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
+import { useEffect } from "react";
 
 const AdminLayout = ({ children }: { children: ReactNode }) => {
+  const { data: session, status } = useSession();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (status === "loading") return;
+    if (!session) {
+      router.push("/login");
+    } else if (session.user?.role !== "admin") {
+      router.push("/user"); // Redirige a usuarios normales
+    }
+  }, [session, status, router]);
+
+  if (status === "loading") {
+    return <Spinner />;
+  }
   return (
     <Flex minH="100vh">
       {/* Menú Lateral */}

@@ -4,8 +4,23 @@ import { ReactNode } from "react";
 import { Box, Flex, VStack, Link, Button } from "@chakra-ui/react";
 import { signOut } from "next-auth/react";
 import NextLink from "next/link";
+import { useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
+import { useEffect } from "react";
 
 const UserLayout = ({ children }: { children: ReactNode }) => {
+  const { data: session, status } = useSession();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (status === "loading") return;
+    if (!session) router.push("/login");
+  }, [session, status, router]);
+
+  if (status === "loading") {
+    return <p>Cargando...</p>;
+  }
+
   return (
     <Flex minH="100vh">
       {/* Menú Lateral */}
