@@ -1,6 +1,6 @@
 "use client";
 
-import { signIn } from "next-auth/react";
+import { signIn, getSession } from "next-auth/react";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import {
@@ -17,6 +17,7 @@ import {
   AlertIcon,
   Divider,
 } from "@chakra-ui/react";
+import Link from "next/link";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -36,8 +37,18 @@ export default function LoginPage() {
 
     if (res?.error) {
       setError(res.error);
+      return;
+    }
+
+    // ✅ Obtener la sesión actualizada después del login
+    const session = await getSession();
+
+    console.log("Sesión después del login:", session);
+
+    if (session?.user?.role === "admin") {
+      router.push("/admin");
     } else {
-      router.push("/user/profile");
+      router.push("/user");
     }
   };
 
@@ -51,7 +62,6 @@ export default function LoginPage() {
       <Box p={6} borderWidth={1} borderRadius="lg" boxShadow="lg" w="100%">
         <VStack spacing={4}>
           <Heading size="lg">Iniciar Sesión</Heading>
-          <Text color="gray.500">Ingresa tus credenciales para continuar</Text>
 
           {error && (
             <Alert status="error">
@@ -80,6 +90,7 @@ export default function LoginPage() {
                 onChange={(e) => setPassword(e.target.value)}
               />
             </FormControl>
+            <Link href="/forgot-password" passHref color="blue.500"> ¿Olvidaste tu contraseña? </Link>
 
             <Button colorScheme="blue" w="100%" mt={6} type="submit">
               Iniciar Sesión
