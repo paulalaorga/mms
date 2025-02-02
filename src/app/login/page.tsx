@@ -41,6 +41,11 @@ export default function LoginPage() {
     }
   };
 
+  // ✅ Definir correctamente la función handleGoogleSignIn
+  const handleGoogleSignIn = async () => {
+    signIn("google", { callbackUrl: "/user/profile" });
+  };
+
   return (
     <Container centerContent maxW="md" py={10}>
       <Box p={6} borderWidth={1} borderRadius="lg" boxShadow="lg" w="100%">
@@ -78,6 +83,11 @@ export default function LoginPage() {
 
             <Button colorScheme="blue" w="100%" mt={6} type="submit">
               Iniciar Sesión
+            </Button>
+
+            {/* ✅ Corregir la función onClick */}
+            <Button colorScheme="red" w="100%" mt={2} onClick={handleGoogleSignIn}>
+              Iniciar Sesión con Google
             </Button>
           </form>
 

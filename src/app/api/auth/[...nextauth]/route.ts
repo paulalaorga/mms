@@ -40,11 +40,12 @@ export const authOptions: NextAuthOptions = {
             throw new Error("Contraseña incorrecta");
           }
 
+
           return {
             id: user._id.toString(),
             name: user.name,
             email: user.email,
-            role: user.role,
+            role: user.role || "user",
           };
         } catch (error) {
           console.error(
@@ -60,6 +61,7 @@ export const authOptions: NextAuthOptions = {
       },
     }),
   ],
+  secret: process.env.NEXTAUTH_SECRET,
   cookies: {
     state: {
       name: "next-auth.state",
@@ -115,7 +117,7 @@ export const authOptions: NextAuthOptions = {
       }
     },
 
-    async redirect({ url, baseUrl }) {
+    async redirect({ baseUrl }) {
       // Obtener la sesión actual
       const session = await fetch(`${baseUrl}/api/auth/session`).then((res) =>
         res.json()

@@ -1,7 +1,7 @@
 "use client";
 
 import { ReactNode } from "react";
-import { Box, Flex, VStack, Link, Text, Button } from "@chakra-ui/react";
+import { Box, Flex, VStack, Link, Button } from "@chakra-ui/react";
 import { signOut } from "next-auth/react";
 import NextLink from "next/link";
 
@@ -11,8 +11,8 @@ const UserLayout = ({ children }: { children: ReactNode }) => {
       {/* Menú Lateral */}
       <Box w="250px" bg="gray.800" color="white" p={5}>
         <VStack align="start" spacing={4}>
-          <Text fontSize="xl" fontWeight="bold">Panel de Usuario</Text>
-          <Link as={NextLink} href="/user" _hover={{ textDecoration: "underline" }}>
+          <Link as={NextLink} href="/user"fontSize="xl" fontWeight="bold">Panel de Usuario</Link>
+          <Link as={NextLink} href="/user/profile" _hover={{ textDecoration: "underline" }}>
             Perfil
           </Link>
           <Link as={NextLink} href="/user/content1" _hover={{ textDecoration: "underline" }}>

@@ -1,6 +1,6 @@
 "use client";
 
-import { Box, Flex, HStack, Link, Text, Icon, Container } from "@chakra-ui/react";
+import { Box, Flex, HStack, Link, Text, Container } from "@chakra-ui/react";
 import { VscAccount } from "react-icons/vsc"; // Importa el icono de usuario
 import NextLink from "next/link";
 
