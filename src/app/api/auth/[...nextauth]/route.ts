@@ -45,7 +45,7 @@ export const authOptions: NextAuthOptions = {
             id: user._id.toString(),
             name: user.name,
             email: user.email,
-            role: user.role || "user",
+            role: user.role,
           };
         } catch (error) {
           console.error(
@@ -83,7 +83,7 @@ export const authOptions: NextAuthOptions = {
             email: user.email,
             name: user.name,
             image: user.image,
-            role: "user",
+            role: user.role,
           });
         }
 
@@ -104,7 +104,7 @@ export const authOptions: NextAuthOptions = {
 
         if (dbUser) {
           session.user.id = dbUser._id.toString();
-          session.user.role = dbUser.role || "user"; // Asegurar que `role` exista
+          session.user.role = dbUser.role; // Asegurar que `role` exista
         }
 
         return session;
