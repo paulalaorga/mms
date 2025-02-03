@@ -33,8 +33,8 @@ const AdminLayout = ({ children }: { children: ReactNode }) => {
           <Link as={NextLink} href="/admin/profile" _hover={{ textDecoration: "underline" }}>
             Perfil
           </Link>
-          <Link as={NextLink} href="/admin/content1" _hover={{ textDecoration: "underline" }}>
-            Contenido 1
+          <Link as={NextLink} href="/admin/users" _hover={{ textDecoration: "underline" }}>
+            Usuarios
           </Link>
           <Link as={NextLink} href="/admin/content2" _hover={{ textDecoration: "underline" }}>
             Contenido 2
