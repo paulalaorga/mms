@@ -1,8 +1,8 @@
 import NextAuth, { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import GoogleProvider from "next-auth/providers/google";
-import { connectDB } from "@/lib/mongodb";
 import User from "@/models/User";
+import { connectDB } from "@/lib/mongodb";
 
 export const authOptions: NextAuthOptions = {
   providers: [
@@ -20,45 +20,28 @@ export const authOptions: NextAuthOptions = {
         password: { label: "Password", type: "password" },
       },
 
-      async authorize(credentials) {
-        try {
-          if (!credentials?.email || !credentials?.password) {
-            throw new Error("Falta el correo o la contraseña");
-          }
-
+      async authorize(credentials: Record<"email" | "password", string> | undefined) {
+        
+          if (!credentials) return null;
           await connectDB();
-          const user = await User.findOne({ email: credentials.email });
+
+          const { email, password } = credentials;
+          const user = await User.findOne({ email });
 
           if (!user) {
             throw new Error("Usuario no encontrado");
           }
 
-          if (!user.password) {
-            throw new Error("Usa otro método de inicio de sesión");
-          }
-
-          if (credentials.password !== user.password) {
+          if (user.password !== password) {
             throw new Error("Contraseña incorrecta");
           }
 
-
-
-          return {
-            id: user._id.toString(),
-            name: user.name,
-            email: user.email,
+          return { 
+            email: user.email, 
             role: user.role,
-          };
-        } catch (error) {
-          console.error(
-            "Error en login:",
-            error instanceof Error ? error.message : error
-          );
-          throw new Error(
-            error instanceof Error
-              ? error.message
-              : "Ocurrió un error desconocido."
-          );
+            id: user._id.toString(),
+            name: user.name
+
         }
       },
     }),
@@ -68,8 +51,25 @@ export const authOptions: NextAuthOptions = {
     strategy: "jwt",
   },
   callbacks: {
+    async signIn({ user }) {
+      // Conectar a Mongo
+      // Buscar si ya existe un usuario con user.email
+      let dbUser = await User.findOne({ email: user.email });
+      if (!dbUser) {
+        dbUser = await User.create({
+          name: user.name,
+          email: user.email,
+          role: user.role,
+          
+        });
+      }
+      // => dbUser._id es un ObjectId
+      return true; 
+    },
+
     async jwt({ token, user }) {
       if (user) {
+        token.sub = user.id;
         token.role = user.role;
       }
       return token;
