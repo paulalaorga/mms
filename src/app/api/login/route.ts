@@ -1,7 +1,6 @@
 import { NextApiRequest, NextApiResponse } from "next";
-import { comparePassword } from "../../../utils/hashPassword";
-import { connectDB } from "../../../lib/mongodb";
-import User from "../../../models/User";
+import { connectDB } from "@/lib/mongodb";
+import User from "@/models/User";
 import { sign } from "jsonwebtoken";
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
@@ -19,7 +18,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   const user = await User.findOne({ email });
 
-  if (!user || !comparePassword(password, user.password)) {
+  if (!user || !password) {
     return res.status(401).json({ message: "Credenciales incorrectas" });
   }
 

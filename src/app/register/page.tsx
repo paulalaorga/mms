@@ -97,6 +97,11 @@ export default function RegisterPage() {
               />
             </FormControl>
 
+            <FormControl isRequired mt={4}>
+              <FormLabel>Confirmar contraseña</FormLabel>
+              <Input type="password" placeholder="********" />
+            </FormControl>
+
             <Button colorScheme="green" w="100%" mt={6} type="submit">
               Registrarse
             </Button>

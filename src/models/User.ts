@@ -8,6 +8,8 @@ export interface IUser extends Document {
   resetPasswordToken?: string;
   resetPasswordExpires?: number;
   createdAt?: Date;
+  isConfirmed?: boolean;
+  confirmationToken?: string;
 }
 
 const UserSchema = new Schema<IUser>({
@@ -18,6 +20,8 @@ const UserSchema = new Schema<IUser>({
   resetPasswordToken: { type: String, default: null },
   resetPasswordExpires: { type: Number, default: null },
   createdAt: { type: Date, default: Date.now },
+  isConfirmed: { type: Boolean, default: false },
+  confirmationToken: { type: String, default: null },
 });
 
 export default mongoose.models.User || mongoose.model<IUser>("User", UserSchema);

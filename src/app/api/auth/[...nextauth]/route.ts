@@ -1,7 +1,7 @@
 import NextAuth, { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import GoogleProvider from "next-auth/providers/google";
-import { connectDB } from "@/lib/mongodb";
+import connectDB from "@/lib/mongodb";
 import User from "@/models/User";
 
 export const authOptions: NextAuthOptions = {
@@ -20,14 +20,17 @@ export const authOptions: NextAuthOptions = {
         password: { label: "Password", type: "password" },
       },
 
-      async authorize(credentials) {
-        try {
+      authorize: async (credentials) => {
+        await connectDB();
+        const user = await User.findOne({ email: credentials?.email });
+
           if (!credentials?.email || !credentials?.password) {
             throw new Error("Falta el correo o la contraseña");
           }
 
-          await connectDB();
-          const user = await User.findOne({ email: credentials.email });
+          if (!user.isConfirmed) {
+            throw new Error("Confirma tu correo para iniciar sesión");
+          }
 
           if (!user) {
             throw new Error("Usuario no encontrado");
@@ -41,25 +44,12 @@ export const authOptions: NextAuthOptions = {
             throw new Error("Contraseña incorrecta");
           }
 
-
-
           return {
             id: user._id.toString(),
             name: user.name,
             email: user.email,
             role: user.role,
           };
-        } catch (error) {
-          console.error(
-            "Error en login:",
-            error instanceof Error ? error.message : error
-          );
-          throw new Error(
-            error instanceof Error
-              ? error.message
-              : "Ocurrió un error desconocido."
-          );
-        }
       },
     }),
   ],
