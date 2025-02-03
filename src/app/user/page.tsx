@@ -2,10 +2,8 @@
 
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import {
-  Box,
-  Button,
   Container,
   Heading,
   Text,
@@ -13,11 +11,24 @@ import {
   SimpleGrid,
   Card,
   CardBody,
+  Spinner,
+  Alert,
+  AlertIcon,
 } from "@chakra-ui/react";
+
+interface Product {
+  id: string;
+  name: string;
+  price: number;
+  status: string;
+}
 
 export default function UserProfile() {
   const { data: session, status } = useSession();
   const router = useRouter();
+  const [products, setProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
   useEffect(() => {
     if (status === "loading") return;
@@ -26,45 +37,62 @@ export default function UserProfile() {
     }
   }, [session, status, router]);
 
+  useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        const res = await fetch("/api/user/products");
+        if (!res.ok) throw new Error("No se pudieron cargar los productos");
+        const data: Product[] = await res.json();
+        setProducts(data);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Error desconocido");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProducts();
+  }, []);
+
   if (status === "loading") {
-    return <Text>Cargando...</Text>;
+    return <Spinner size="xl" />;
   }
-
-  // Simulación de productos
-  const products = [
-    { id: 1, name: "Plan Básico", price: "10€", description: "Acceso limitado a contenido" },
-    { id: 2, name: "Plan Estándar", price: "20€", description: "Acceso a todo el contenido" },
-    { id: 3, name: "Plan Premium", price: "30€", description: "Beneficios exclusivos y soporte prioritario" },
-  ];
-
-  const handlePurchase = (productId: number) => {
-    alert(`Redirigiendo al pago del producto ${productId}`);
-    // Aquí podrías redirigir a una pasarela de pago (Stripe, PayPal, etc.)
-  };
 
   return (
     <Container centerContent py={10}>
-      <Box p={6} borderWidth={1} borderRadius="lg" boxShadow="lg" w="100%" maxW="md">
-        <VStack spacing={4}>
-          <Heading size="lg">Opciones de Compra</Heading>
-          <Text>Elige el plan que mejor se adapte a tus necesidades.</Text>
+      <VStack spacing={6} align="center">
+        <Heading size="lg">Bienvenido, {session?.user?.name || "Usuario"} 🎉</Heading>
+        <Text fontSize="lg">Este es tu panel de usuario</Text>
 
-          <SimpleGrid columns={1} spacing={4} w="100%">
+        <Heading size="md" mt={6}>Tus productos comprados</Heading>
+
+        {loading && <Spinner size="lg" />}
+        {error && (
+          <Alert status="error">
+            <AlertIcon />
+            {error}
+          </Alert>
+        )}
+
+        {!loading && !error && products.length === 0 && (
+          <Text>No tienes productos comprados aún.</Text>
+        )}
+
+        {!loading && !error && (
+          <SimpleGrid columns={[1, 2]} spacing={4} width="100%">
             {products.map((product) => (
-              <Card key={product.id} borderWidth={1} p={4}>
+              <Card key={product.id} width="100%" borderWidth="1px" borderRadius="lg">
                 <CardBody>
                   <Heading size="md">{product.name}</Heading>
-                  <Text>{product.description}</Text>
-                  <Text fontWeight="bold" mt={2}>{product.price}</Text>
-                  <Button colorScheme="blue" mt={4} w="100%" onClick={() => handlePurchase(product.id)}>
-                    Comprar
-                  </Button>
+                  <Text>Precio: ${product.price}</Text>
+                  <Text>Estado: {product.status}</Text>
                 </CardBody>
               </Card>
             ))}
           </SimpleGrid>
-        </VStack>
-      </Box>
+        )}
+
+      </VStack>
     </Container>
   );
 }
