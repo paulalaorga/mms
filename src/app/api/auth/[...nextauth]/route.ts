@@ -20,7 +20,7 @@ export const authOptions: NextAuthOptions = {
         password: { label: "Password", type: "password" },
       },
 
-      authorize: async (credentials) => {
+      async authorize (credentials) {
         await connectDB();
         const user = await User.findOne({ email: credentials?.email });
 
@@ -28,19 +28,20 @@ export const authOptions: NextAuthOptions = {
             throw new Error("Falta el correo o la contraseña");
           }
 
-          if (!user.isConfirmed) {
-            throw new Error("Confirma tu correo para iniciar sesión");
-          }
-
           if (!user) {
             throw new Error("Usuario no encontrado");
           }
 
-          if (user.password !== password) {
+          if (!user.isConfirmed) {
+            throw new Error("Confirma tu correo para iniciar sesión");
+          }
+
+          if (user.password !== credentials?.password) {
             throw new Error("Contraseña incorrecta");
           }
 
           return { 
+            id: user._id.toString(),
             email: user.email, 
             role: user.role,
           };
