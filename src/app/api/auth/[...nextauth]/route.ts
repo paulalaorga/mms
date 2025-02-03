@@ -19,6 +19,7 @@ export const authOptions: NextAuthOptions = {
         email: { label: "Email", type: "email", placeholder: "tu@correo.com" },
         password: { label: "Password", type: "password" },
       },
+
       async authorize(credentials) {
         try {
           if (!credentials?.email || !credentials?.password) {
@@ -63,59 +64,21 @@ export const authOptions: NextAuthOptions = {
     }),
   ],
   secret: process.env.NEXTAUTH_SECRET,
-  cookies: {
-    state: {
-      name: "next-auth.state",
-      options: {
-        httpOnly: true,
-        sameSite: "lax",
-        path: "/",
-      },
-    },
+  session: {
+    strategy: "jwt",
   },
   callbacks: {
-    async signIn({ user }) {
-      try {
-        await connectDB();
-        let dbUser = await User.findOne({ email: user.email });
-
-        if (!dbUser) {
-          dbUser = await User.create({
-            email: user.email,
-            name: user.name,
-            image: user.image,
-            role: user.role,
-          });
-        }
-
-        return true;
-      } catch (error) {
-        console.error(
-          "Error en signIn callback:",
-          error instanceof Error ? error.message : error
-        );
-        return false;
+    async jwt({ token, user }) {
+      if (user) {
+        token.role = user.role;
       }
+      return token;
     },
 
-    async session({ session }) {
-      try {
-        await connectDB();
-        const dbUser = await User.findOne({ email: session.user.email });
-
-        if (dbUser) {
-          session.user.id = dbUser._id.toString();
-          session.user.role = dbUser.role; // Asegurar que `role` exista
-        }
-
-        return session;
-      } catch (error) {
-        console.error(
-          "Error en session callback:",
-          error instanceof Error ? error.message : error
-        );
-        return session;
-      }
+    async session({ session, token }) {
+      session.user.id = token?.sub ?? "";
+      session.user.role = token?.role as string ?? "";
+      return session;
     },
 
     async redirect({ baseUrl }) {
