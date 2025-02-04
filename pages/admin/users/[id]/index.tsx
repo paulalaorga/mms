@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/router";
 import { Box, Heading, Text, Spinner, Alert, AlertIcon } from "@chakra-ui/react";
 
 interface User {
@@ -11,18 +12,23 @@ interface User {
   createdAt?: string;
 }
 
-export default function UserDetailPage({ params }: { params: { id: string } }) {
-  const { id } = params;
+export default function UserDetailPage() {
+
+  const router = useRouter();
+  const { id } = router.query;
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
   useEffect(() => {
+
+    if (!id) return;
+
     const fetchUser = async () => {
       try {
         const res = await fetch(`/api/admin/users/${id}`);
         if (!res.ok) throw new Error("No se pudo cargar el usuario");
-        const data: User = await res.json();
+        const data = await res.json();
         setUser(data);
       } catch (error) {
         if (error instanceof Error) {
