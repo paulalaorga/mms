@@ -2,10 +2,12 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import mongoose from "mongoose";
 import User from "@/models/User";
-import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { authOptions } from "./auth/[...nextauth]";
+import { Session } from "next-auth";
 
 export async function GET() {
-  const session = await getServerSession(authOptions);
+ 
+  const session: Session | null = await getServerSession(authOptions);
   if (!session || !session.user || !session.user.id) {
     return NextResponse.json({ error: "No autenticado" }, { status: 401 });
   }

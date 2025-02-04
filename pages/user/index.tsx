@@ -15,6 +15,7 @@ import {
   Alert,
   AlertIcon,
 } from "@chakra-ui/react";
+import UserLayout from "./layout";
 
 interface Product {
   id: string;
@@ -23,7 +24,7 @@ interface Product {
   status: string;
 }
 
-export default function UserProfile() {
+export default function UserDashboard() {
   const { data: session, status } = useSession();
   const router = useRouter();
   const [products, setProducts] = useState<Product[]>([]);
@@ -96,3 +97,7 @@ export default function UserProfile() {
     </Container>
   );
 }
+
+UserDashboard.getLayout = function getLayout(page: React.ReactNode) {
+  return <UserLayout>{page}</UserLayout>;
+};

@@ -4,6 +4,7 @@ import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { Heading, Text, Spinner } from "@chakra-ui/react";
+import AdminLayout from "./layout";
 
 export default function AdminPage() {
   const { data: session, status } = useSession();
@@ -27,3 +28,7 @@ export default function AdminPage() {
     </>
   );
 }
+
+AdminPage.getLayout = function getLayout(page: React.ReactNode) {
+  return <AdminLayout>{page}</AdminLayout>;
+};

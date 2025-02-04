@@ -1,5 +1,5 @@
 {
-  "name": "login",
+  "name": "mms-app",
   "version": "0.1.0",
   "private": true,
   "scripts": {
@@ -20,7 +20,7 @@
     "framer-motion": "^12.0.6",
     "jsonwebtoken": "^9.0.2",
     "mongoose": "^8.9.5",
-    "next": "15.1.6",
+    "next": "^15.1.6",
     "next-auth": "^4.24.11",
     "nodemailer": "^6.10.0",
     "react": "^19.0.0",
