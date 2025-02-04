@@ -1,23 +1,20 @@
 "use client";
 
-import { signIn, getSession } from "next-auth/react";
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter } from "next/router";
 import {
   Box,
   Button,
-  Container,
-  FormControl,
   Checkbox,
+  Container,
   Input,
-  VStack,
-  Heading,
+  Stack,
   Text,
-  Alert,
-  AlertIcon,
-  Divider,
 } from "@chakra-ui/react";
-import Link from "next/link";
+import Navbar from "../src/components/Navbar";
+import NextLink from "next/link";
+import { signIn, getSession } from "next-auth/react";
+import { FaGoogle } from "react-icons/fa";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -44,7 +41,7 @@ export default function LoginPage() {
       if (session?.user) {
         const userRole = session.user.role;
         router.push(userRole === "admin" ? "/admin" : "/user");
-        }
+      }
     };
     checkSession();
   }, [router]);
@@ -70,132 +67,93 @@ export default function LoginPage() {
     });
 
     if (res?.error) {
-      setError("Error al inicair sesión: " + res.error);
+      setError("Error al iniciar sesión: " + res.error);
       return;
     }
-  
 
-// ✅ Esperar a que la sesión se actualice
-const session = await getSession();
-if (session?.user) {
-  const userRole = session.user.role; 
-  router.push(userRole === "admin" ? "/admin" : "/user");
-} else {
-  setError("No se pudo obtener la sesión.");
-}
-};
+    // ✅ Esperar a que la sesión se actualice
+    const session = await getSession();
+    if (session?.user) {
+      const userRole = session.user.role; 
+      router.push(userRole === "admin" ? "/admin" : "/user");
+    } else {
+      setError("No se pudo obtener la sesión.");
+    }
+  };
 
   const handleGoogleSignIn = async () => {
     const res = await signIn("google", { redirect: false });
 
     if (res?.error) {
       setError(res.error);
-    return;
-  }
+      return;
+    }
 
-  const session = await getSession();
-  if (session?.user) {
-    const userRole = session.user.role;
-    router.push(userRole === "admin" ? "/admin" : "/user");
-  } 
-};
+    const session = await getSession();
+    if (session?.user) {
+      const userRole = session.user.role;
+      router.push(userRole === "admin" ? "/admin" : "/user");
+    }
+  };
 
+  // ✅ Manejo de cambio del checkbox
+  const handleCheckboxChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setRememberMe(event.target.checked);
+  };
 
   return (
-    <Container centerContent maxW="md" py={10}>
-      <Box p={6} borderWidth={1} borderRadius="lg" boxShadow="lg" w="100%">
-        <VStack spacing={4}>
-          <Heading size="lg">Iniciar Sesión</Heading>
-
-          {error && (
-            <Alert status="error">
-              <AlertIcon />
-              {error}
-            </Alert>
-          )}
-
-          <form onSubmit={handleSubmit} style={{ width: "100%" }}>
-            <FormControl isRequired>
-              <Input
-                type="email"
-                placeholder="correo@example.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-              />
-            </FormControl>
-
-            <FormControl isRequired mt={4}>
-              <Input
-                type="password"
-                placeholder="********"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-              />
-            </FormControl>
-
-            <div
-              style={{
-                display: "flex",
-                flexDirection: "row",
-                alignItems: "center",
-                justifyContent: "space-between",
-                width: "100%", // Para evitar que los elementos se amontonen en pantallas pequeñas
-                marginTop: "10px",
-              }}
+    <>
+      <Navbar />
+      <Container centerContent py={10}>
+        <Box p={6} boxShadow="lg" w="100%" maxW="md">
+          <Stack spacing={4} mt={6}>
+            <Input
+              placeholder="Correo electrónico"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)} // Maneja el estado del correo electrónico
+            />
+            <Input
+              placeholder="Contraseña"
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)} // Maneja el estado de la contraseña
+            />
+            <Checkbox
+              isChecked={rememberMe}
+              onChange={handleCheckboxChange} // Llama a la función para manejar el checkbox
             >
-              {/* ✅ Checkbox para recordar sesión */}
-              <Checkbox
-                isChecked={rememberMe}
-                onChange={(e) => setRememberMe(e.target.checked)}
-              >
-                Recordarme
-              </Checkbox>
-
-              <Link
-                href="/forgot-password"
-                passHref
-                style={{
-                  color: "#3182CE", // Azul de Chakra UI para mejor visibilidad
-                  textDecoration: "underline", // Subrayado para indicar que es un enlace
-                  marginLeft: "auto", // Empuja el enlace a la derecha
-                }}
-              >
-                ¿Olvidaste tu contraseña?
-              </Link>
-            </div>
-
-            <Button
-              colorScheme="blue"
-              w="100%"
-              mt={6}
-              type="submit"
-            >
-              Iniciar Sesión
+              Recordar mi cuenta
+            </Checkbox>
+            <NextLink href="/forgot-password">
+              <Text as="span" color="secondary.200" cursor="pointer">
+                Olvidé mi contraseña
+              </Text>
+            </NextLink>
+            {error && <Text color="red.500">{error}</Text>} {/* Mostrar mensaje de error */}
+            <Button color="secondary" size="lg" w="full" onClick={handleSubmit}>
+              Iniciar sesión
             </Button>
-
-            {/* ✅ Corregir la función onClick */}
             <Button
               colorScheme="red"
-              w="100%"
-              mt={2}
-              onClick={handleGoogleSignIn}
+              size="lg"
+              w="full"
+              onClick={handleGoogleSignIn} // Llama a la función para manejar Google
+              leftIcon={<FaGoogle />} // Agrega el ícono de Google al botón
             >
-              Iniciar Sesión con Google
+              Iniciar sesión con Google
             </Button>
-          </form>
-
-          <Divider />
-
-          <Text>¿No tienes una cuenta?</Text>
-          <Button
-            colorScheme="green"
-            w="100%"
-            onClick={() => router.push("/register")}
-          >
-            Registrarse
-          </Button>
-        </VStack>
-      </Box>
-    </Container>
+          </Stack>
+          <Text mt={4} color="gray.600" textAlign="center">
+            ¿No tienes cuenta?
+          </Text>
+          <NextLink href="/register">
+            <Text color="secondary.200" textAlign="center" cursor="pointer">
+              Regístrate
+            </Text>
+          </NextLink>
+        </Box>
+      </Container>
+    </>
   );
 }

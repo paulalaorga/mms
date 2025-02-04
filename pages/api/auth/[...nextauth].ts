@@ -92,7 +92,7 @@ export const authOptions: AuthOptions = {
       console.log("Redirigiendo usuario con rol:", session?.user?.role);
 
       // Redirigir según el rol del usuario
-      if (session?.user?.role === "admin") {
+      if (session.user?.role === "admin") {
         return `${baseUrl}/admin`;
       } else {
         return `${baseUrl}/user`;
