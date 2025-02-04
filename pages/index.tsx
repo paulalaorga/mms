@@ -8,7 +8,7 @@ export default function HomePage() {
   return (
     <>
       {/* Barra de navegación */}
-      <Box bg="gray.800" color="white" py={3} px={6}>
+      <Box bg="brand.200" color="white" py={3} px={6}>
         <Flex justify="space-between" align="center">
           <Text fontSize="xl" fontWeight="bold">Mi Aplicación</Text>
           <HStack spacing={6}>
