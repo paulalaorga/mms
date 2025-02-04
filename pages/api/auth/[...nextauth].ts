@@ -102,7 +102,7 @@ export const authOptions: AuthOptions = {
   pages: {
     signIn: "/login",
     error: "/error",
-    signOut: "/",
+    signOut: "/index",
   },
 };
 
