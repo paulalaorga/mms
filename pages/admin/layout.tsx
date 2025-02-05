@@ -29,33 +29,21 @@ const AdminLayout = ({ children }: { children: ReactNode }) => {
       {/* Menú Lateral */}
       <Box w="250px" bg="gray.800" color="white" p={5}>
         <VStack align="start" spacing={4}>
-          <Link fontSize="xl" fontWeight="bold" href="/admin">Admin Panel</Link>
-          <Link as={NextLink} href="/admin/profile" _hover={{ textDecoration: "underline" }}>
-            Perfil
+          <Link fontSize="xl" fontWeight="bold" href="/admin">Panel de Inicio</Link>
+          <Link as={NextLink} href="/admin/sessions" _hover={{ textDecoration: "underline" }}>
+            Mis Sesiones
           </Link>
           <Link as={NextLink} href="/admin/users" _hover={{ textDecoration: "underline" }}>
-            Usuarios
+            Lista de Usuarios
           </Link>
-          <Link as={NextLink} href="/admin/content2" _hover={{ textDecoration: "underline" }}>
-            Contenido 2
+          <Link as={NextLink} href="/admin/read_notes" _hover={{ textDecoration: "underline" }}>
+            Mis Notas
           </Link>
-          <Link as={NextLink} href="/admin/content2" _hover={{ textDecoration: "underline" }}>
-            Contenido 2
+          <Link as={NextLink} href="/admin/calendar" _hover={{ textDecoration: "underline" }}>
+            Mi Calendario
           </Link>
-          <Link as={NextLink} href="/admin/content2" _hover={{ textDecoration: "underline" }}>
-            Contenido 2
-          </Link><Link as={NextLink} href="/admin/content2" _hover={{ textDecoration: "underline" }}>
-            Contenido 2
-          </Link><Link as={NextLink} href="/admin/content2" _hover={{ textDecoration: "underline" }}>
-            Contenido 2
-          </Link><Link as={NextLink} href="/admin/content2" _hover={{ textDecoration: "underline" }}>
-            Contenido 2
-          </Link><Link as={NextLink} href="/admin/content2" _hover={{ textDecoration: "underline" }}>
-            Contenido 2
-          </Link><Link as={NextLink} href="/admin/content2" _hover={{ textDecoration: "underline" }}>
-            Contenido 2
-          </Link><Link as={NextLink} href="/admin/content2" _hover={{ textDecoration: "underline" }}>
-            Contenido 2
+          <Link as={NextLink} href="/admin/reportes" _hover={{ textDecoration: "underline" }}>
+            Reportes
           </Link>
 
           {/* Botón para cerrar sesión */}
