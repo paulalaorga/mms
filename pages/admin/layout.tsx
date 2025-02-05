@@ -1,7 +1,7 @@
 "use client";
 
 import { ReactNode } from "react";
-import { Box, Flex, VStack, Link, Text, Button, Spinner } from "@chakra-ui/react";
+import { Box, Flex, VStack, Link, Button, Spinner } from "@chakra-ui/react";
 import NextLink from "next/link";
 import { signOut } from "next-auth/react";
 import { useSession } from "next-auth/react";
@@ -29,7 +29,7 @@ const AdminLayout = ({ children }: { children: ReactNode }) => {
       {/* Menú Lateral */}
       <Box w="250px" bg="gray.800" color="white" p={5}>
         <VStack align="start" spacing={4}>
-          <Text fontSize="xl" fontWeight="bold">Admin Panel</Text>
+          <Link fontSize="xl" fontWeight="bold" href="/admin">Admin Panel</Link>
           <Link as={NextLink} href="/admin/profile" _hover={{ textDecoration: "underline" }}>
             Perfil
           </Link>
@@ -37,6 +37,24 @@ const AdminLayout = ({ children }: { children: ReactNode }) => {
             Usuarios
           </Link>
           <Link as={NextLink} href="/admin/content2" _hover={{ textDecoration: "underline" }}>
+            Contenido 2
+          </Link>
+          <Link as={NextLink} href="/admin/content2" _hover={{ textDecoration: "underline" }}>
+            Contenido 2
+          </Link>
+          <Link as={NextLink} href="/admin/content2" _hover={{ textDecoration: "underline" }}>
+            Contenido 2
+          </Link><Link as={NextLink} href="/admin/content2" _hover={{ textDecoration: "underline" }}>
+            Contenido 2
+          </Link><Link as={NextLink} href="/admin/content2" _hover={{ textDecoration: "underline" }}>
+            Contenido 2
+          </Link><Link as={NextLink} href="/admin/content2" _hover={{ textDecoration: "underline" }}>
+            Contenido 2
+          </Link><Link as={NextLink} href="/admin/content2" _hover={{ textDecoration: "underline" }}>
+            Contenido 2
+          </Link><Link as={NextLink} href="/admin/content2" _hover={{ textDecoration: "underline" }}>
+            Contenido 2
+          </Link><Link as={NextLink} href="/admin/content2" _hover={{ textDecoration: "underline" }}>
             Contenido 2
           </Link>
 

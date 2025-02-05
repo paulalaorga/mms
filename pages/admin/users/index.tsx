@@ -14,7 +14,9 @@ import {
   AlertIcon,
   Box,
   Heading,
-  Link
+  Link,
+  Flex,
+  Input,
 } from "@chakra-ui/react";
 import { IUser } from "@/models/User";
 
@@ -24,6 +26,8 @@ export default function UsersPage() {
   const [users, setUsers] = useState<IUser[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [searchTerm, setSearchTerm] = useState("");
+  const [filteredUsers, setFilteredUsers] = useState<IUser[]>([]);
 
   useEffect(() => {
     const fetchUsers = async () => {
@@ -32,6 +36,7 @@ export default function UsersPage() {
         if (!res.ok) throw new Error("No se pudieron cargar los usuarios");
         const data = await res.json();
         setUsers(data);
+        setFilteredUsers(data);
       } catch (err) {
         if (err instanceof Error) {
           setError(err.message);
@@ -46,9 +51,32 @@ export default function UsersPage() {
     fetchUsers();
   }, []);
 
+  useEffect(() => {
+    const filtered = users.filter(user =>
+      user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      user.role?.toLowerCase().includes(searchTerm.toLowerCase())
+
+    );
+    setFilteredUsers(filtered);
+  }, [searchTerm, users]);
+
   return (
     <Box p={6}>
+      <Flex justify="space-between" mb={4}>
       <Heading size="lg" mb={4}>Lista de Usuarios</Heading>
+      <Input
+        type="text"
+        placeholder="Buscar usuario por nombre/mail/rol"
+        value={searchTerm}
+        onChange={(e) => setSearchTerm(e.target.value)}
+        border="1px solid #CBD5E0"
+        borderRadius="md"
+        p={2}
+        w="auto"
+        mr={4}
+      />
+      </Flex>
 
       {loading && <Spinner size="xl" />}
       {error && (
@@ -70,7 +98,7 @@ export default function UsersPage() {
               </Tr>
             </Thead>
             <Tbody>
-              {users.map((user) => (
+              {filteredUsers.map((user) => (
                 <Tr key={String(user._id)}>
                   <Td>{user.name || "Sin nombre"}</Td>
                   <Td>{user.email}</Td>
