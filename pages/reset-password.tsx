@@ -1,31 +1,40 @@
 "use client";
 
-import { useState } from "react";
-import { useSearchParams, useRouter } from "next/navigation";
+import { useState, useEffect } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import {
   Box,
-  Button,
   Container,
   FormControl,
   FormLabel,
-  Input,
   VStack,
   Heading,
-  Text,
   Alert,
   AlertIcon,
+  Input,
 } from "@chakra-ui/react";
+
+import Navbar from "@/components/layout/Navbar";
+import MyButton from "@/components/ui/Button";
 
 export default function ResetPasswordPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const token = searchParams.get("token");
+  const [token, setToken] = useState<string | null>(null);
 
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
+  // ✅ Leer token correctamente
+  useEffect(() => {
+    const urlToken = searchParams.get("token");
+    setToken(urlToken);
+    console.log("🔍 Token recibido:", urlToken);
+  }, [searchParams]);
+
+  // ✅ Manejo del formulario
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
@@ -41,70 +50,80 @@ export default function ResetPasswordPage() {
       return;
     }
 
-    const res = await fetch("/api/auth/reset-password", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ token, newPassword }),
-    });
+    try {
+      const res = await fetch("/api/auth/reset-password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ token, newPassword }),
+      });
 
-    const data = await res.json();
+      const data = await res.json();
+      console.log("📌 Respuesta de la API:", data);
 
-    if (res.ok) {
-      setSuccess("Tu contraseña ha sido restablecida con éxito.");
-      setTimeout(() => router.push("/login"), 3000);
-    } else {
-      setError(data.message);
+      if (res.ok) {
+        setSuccess("Tu contraseña ha sido restablecida con éxito.");
+        setTimeout(() => router.push("/login"), 3000);
+      } else {
+        setError(data.message);
+      }
+    } catch (err) {
+      console.error("❌ Error en la API:", err);
+      setError("Error en el servidor. Inténtalo más tarde.");
     }
   };
 
   return (
-    <Container centerContent maxW="md" py={10}>
-      <Box p={6} borderWidth={1} borderRadius="lg" boxShadow="lg" w="100%">
-        <VStack spacing={4}>
-          <Heading size="lg">Restablecer Contraseña</Heading>
-          <Text color="gray.500">Ingresa una nueva contraseña</Text>
+    <>
+      <Navbar />
+      <Box bg="brand.200" py={20} minH="100vh" display="flex" alignItems="center" justifyContent="center">
+        <Container maxW="md" centerContent>
+          <Box p={6} w="100%" maxW="md" border={1} borderRadius="md" bg="white">
+            <VStack spacing={4}>
+              <Heading size="lg">Restablecer Contraseña</Heading>
 
-          {error && (
-            <Alert status="error">
-              <AlertIcon />
-              {error}
-            </Alert>
-          )}
+              {error && (
+                <Alert status="error">
+                  <AlertIcon />
+                  {error}
+                </Alert>
+              )}
 
-          {success && (
-            <Alert status="success">
-              <AlertIcon />
-              {success}
-            </Alert>
-          )}
+              {success && (
+                <Alert status="success">
+                  <AlertIcon />
+                  {success}
+                </Alert>
+              )}
 
-          <form onSubmit={handleSubmit} style={{ width: "100%" }}>
-            <FormControl isRequired>
-              <FormLabel>Nueva Contraseña</FormLabel>
-              <Input
-                type="password"
-                placeholder="********"
-                value={newPassword}
-                onChange={(e) => setNewPassword(e.target.value)}
-              />
-            </FormControl>
+              <form onSubmit={handleSubmit} style={{ width: "100%" }}>
+                <FormControl isRequired>
+                  <FormLabel>Nueva Contraseña</FormLabel>
+                  <Input
+                    type="password"
+                    placeholder="********"
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                  />
+                </FormControl>
 
-            <FormControl isRequired mt={4}>
-              <FormLabel>Confirmar Contraseña</FormLabel>
-              <Input
-                type="password"
-                placeholder="********"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-              />
-            </FormControl>
+                <FormControl isRequired mt={4}>
+                  <FormLabel>Confirmar Contraseña</FormLabel>
+                  <Input
+                    type="password"
+                    placeholder="********"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                  />
+                </FormControl>
 
-            <Button colorScheme="blue" w="100%" mt={6} type="submit">
-              Restablecer Contraseña
-            </Button>
-          </form>
-        </VStack>
+                <MyButton variant="outline" size="lg" w="full" mt={6} type="submit">
+                  Restablecer Contraseña
+                </MyButton>
+              </form>
+            </VStack>
+          </Box>
+        </Container>
       </Box>
-    </Container>
+    </>
   );
 }

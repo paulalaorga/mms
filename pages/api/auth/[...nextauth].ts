@@ -20,37 +20,38 @@ export const authOptions: AuthOptions = {
         password: { label: "Password", type: "password" },
       },
 
-      async authorize (credentials) {
+      async authorize(credentials) {
         await connectDB();
         const user = await User.findOne({ email: credentials?.email });
 
-          if (!credentials?.email || !credentials?.password) {
-            throw new Error("Falta el correo o la contraseña");
-          }
+        if (!credentials?.email || !credentials?.password) {
+          throw new Error("Falta el correo o la contraseña");
+        }
 
-          if (!user) {
-            throw new Error("Usuario no encontrado");
-          }
+        if (!user) {
+          throw new Error("Usuario no encontrado");
+        }
 
-          if (!user.isConfirmed) {
-            throw new Error("Confirma tu correo para iniciar sesión");
-          }
+        if (!user.isConfirmed) {
+          throw new Error("Confirma tu correo para iniciar sesión");
+        }
 
-          if (user.password !== credentials?.password) {
-            throw new Error("Contraseña incorrecta");
-          }
+        if (user.password !== credentials?.password) {
+          throw new Error("Contraseña incorrecta");
+        }
 
-          return { 
-            id: user._id.toString(),
-            email: user.email, 
-            role: user.role,
-          };
+        return {
+          id: user._id.toString(),
+          email: user.email,
+          role: user.role,
+        };
       },
     }),
   ],
   secret: process.env.NEXTAUTH_SECRET,
   session: {
     strategy: "jwt",
+    maxAge: 24 * 60 * 60, // 1 día
   },
   callbacks: {
     async signIn({ user }) {
@@ -62,14 +63,17 @@ export const authOptions: AuthOptions = {
           name: user.name,
           email: user.email,
           role: user.role,
-          
         });
       }
       // => dbUser._id es un ObjectId
-      return true; 
+      return true;
     },
 
-    async jwt({ token, user }) {
+    async jwt({ token, user, trigger }) {
+      if (trigger === "signIn") {
+        token.sub = user.id;
+        token.role = user.role;
+      }
       if (user) {
         token.sub = user.id;
         token.role = user.role;
@@ -79,23 +83,29 @@ export const authOptions: AuthOptions = {
 
     async session({ session, token }) {
       session.user.id = token?.sub ?? "";
-      session.user.role = token?.role as string ?? "";
+      session.user.role = (token?.role as string) ?? "";
       return session;
     },
 
     async redirect({ baseUrl }) {
-      // Obtener la sesión actual
-      const session = await fetch(`${baseUrl}/api/auth/session`).then((res) =>
-        res.json()
-      );
+      try {
+        const session = await fetch(`${baseUrl}/api/auth/session`).then((res) =>
+          res.json()
+        );
 
-      console.log("Redirigiendo usuario con rol:", session?.user?.role);
+        if (!session || !session.user) {
+          return `${baseUrl}/login`;
+        }
 
-      // Redirigir según el rol del usuario
-      if (session?.user?.role === "admin") {
-        return `${baseUrl}/admin`;
-      } else {
-        return `${baseUrl}/user`;
+        // Redirigir según el rol del usuario
+        if (session.user?.role === "admin") {
+          return `${baseUrl}/admin`;
+        } else {
+          return `${baseUrl}/user`;
+        }
+      } catch (error) {
+        console.error("❌ Error en la API:", error);
+        return `${baseUrl}/error`;
       }
     },
   },

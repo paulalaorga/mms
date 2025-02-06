@@ -10,9 +10,9 @@ const config: ThemeConfig = {
 // Define tu tema personalizado
 const theme = extendTheme({
   config,
-  FontFace: {
-    body: "Roboto Thin",
-    heading: "Bebas Neue",
+  fonts: {
+    body: "Roboto Thin, sans-serif",
+    heading: "Bebas Neue, sans-serif"
   },
   colors: {
       brand: {
@@ -43,7 +43,27 @@ const theme = extendTheme({
         200: "#ff361b", // Base color
         250: "#cc2b16",
       },
-    }
+    },
+    semanticTokens: {
+      colors: {
+        text: {
+          default: "#111827",
+          _dark: "#F9FAFB",
+        },
+        background: {
+          default: "#F9FAFB",
+          _dark: "#1A202C",
+        },
+        primary: {
+          default: "brand.200",
+          _dark: "brand.100",
+        },
+        secondary: {
+          default: "secondary.200",
+          _dark: "secondary.100",
+        },
+      },
+    },
   });
 
 export default theme;
