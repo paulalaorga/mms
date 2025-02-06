@@ -1,8 +1,8 @@
 "use client";
 
-import Navbar from "../src/components/Navbar";
-import CallToAction from "@/components/CallToAction";
-import Hero1 from "../src/components/hero/Hero1";
+import Navbar from "../src/components/layout/Navbar";
+import CallToAction from "@/components/layout/CallToAction";
+import Hero1 from "./home/Hero1";
 
 
 export default function HomePage() {

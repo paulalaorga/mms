@@ -15,7 +15,7 @@ import {
   Alert,
   AlertIcon,
 } from "@chakra-ui/react";
-import Navbar from "../src/components/Navbar";
+import Navbar from "../src/components/layout/Navbar";
 
 export default function RegisterPage() {
   const router = useRouter();
