@@ -45,6 +45,9 @@ const AdminLayout = ({ children }: { children: ReactNode }) => {
           <Link as={NextLink} href="/admin/reportes" _hover={{ textDecoration: "underline" }}>
             Reportes
           </Link>
+          <Link as={NextLink} href="/admin/emails" _hover={{ textDecoration: "underline" }}>
+            Emails
+          </Link>
 
           {/* Botón para cerrar sesión */}
           <Button colorScheme="red" size="sm" w="100%" mt={4} onClick={() => signOut()}>

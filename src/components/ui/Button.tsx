@@ -5,7 +5,7 @@ interface Props extends ButtonProps {
   isLoading?: boolean;
 }
 
-export default function Button({ variant = "primary", isLoading, children, ...props }: Props) {
+export default function MyButton({ variant = "primary", isLoading, children, ...props }: Props) {
   const styles = {
     primary: {
       bg: "brand.200",
