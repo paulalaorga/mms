@@ -30,30 +30,41 @@ export default function UserDashboard() {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [showProfileProgress, setShowProfileProgress] = useState(true);
+  const [isPatient, setIsPatient] = useState(false);
 
   useEffect(() => {
-    if (status === "loading") return;
-    if (!session) {
-      router.push("/login");
-    }
-  }, [session, status, router]);
-
-  useEffect(() => {
-    const fetchProducts = async () => {
+    if (!session?.user?.email) return;
+  
+    const fetchUserData = async () => {
       try {
-        const res = await fetch("/api/user/products");
-        if (!res.ok) throw new Error("No se pudieron cargar los productos");
-        const data: Product[] = await res.json();
-        setProducts(data);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : "Error desconocido");
-      } finally {
-        setLoading(false);
+        const res = await fetch("/api/user/profile");
+        if (!res.ok) throw new Error("Error al cargar los datos del perfil.");
+  
+        const data = await res.json();
+        console.log("✅ Datos del usuario recibidos:", data);
+  
+        const userData = data.userData || data;
+  
+        setIsPatient(userData.isPatient ?? false);
+        setShowProfileProgress(
+          !userData.name ||
+          !userData.surname ||
+          !userData.email ||
+          !userData.dni ||
+          !userData.phone ||
+          !userData.contractSigned ||
+          !userData.recoveryContact
+        );
+  
+      } catch (error) {
+        console.error("Error al cargar los datos del perfil:", error);
       }
     };
-
-    fetchProducts();
-  }, []);
+  
+    fetchUserData();
+  }, [session]);
+  
 
   if (status === "loading") {
     return <Spinner size="xl" />;
@@ -62,37 +73,45 @@ export default function UserDashboard() {
   return (
     <Container centerContent py={10}>
       <VStack spacing={6} align="center">
-        <Heading size="lg">Bienvenido, {session?.user?.name || "Usuario"} 🎉</Heading>
-        <Text fontSize="lg">Este es tu panel de usuario</Text>
-
-        <Heading size="md" mt={6}>Tus productos comprados</Heading>
-
-        {loading && <Spinner size="lg" />}
         {error && (
           <Alert status="error">
             <AlertIcon />
             {error}
           </Alert>
         )}
-
-        {!loading && !error && products.length === 0 && (
-          <Text>No tienes productos comprados aún.</Text>
+        <Heading size="lg">
+          Bienvenido, {session?.user?.name || "Usuario"}{" "}
+          {session?.user?.surname || ""} 🎉
+        </Heading>
+        <Text fontSize="lg">Este es tu panel de usuario</Text>
+        {/* Mostrar barra de progreso solo si faltan datos */}
+        {showProfileProgress && (
+          <Box w="100%" alignContent="center" textAlign="center">
+            <ProfileProgress />
+          </Box>
         )}
-
-        {!loading && !error && (
-          <SimpleGrid columns={[1, 2]} spacing={4} width="100%">
-            {products.map((product) => (
-              <Card key={product.id} width="100%" borderWidth="1px" borderRadius="lg">
-                <CardBody>
-                  <Heading size="md">{product.name}</Heading>
-                  <Text>Precio: ${product.price}</Text>
-                  <Text>Estado: {product.status}</Text>
-                </CardBody>
-              </Card>
-            ))}
-          </SimpleGrid>
+        {!isPatient && (
+          <Alert status="info" mt={4}>
+            <AlertIcon />
+            No estás registrado en ningún programa. Consulta los programas
+            disponibles en nuestra tienda.
+          </Alert>
         )}
-
+        {isPatient && session?.user?.groupProgramPaid && (
+          <Alert status="success" mt={4}>
+            <AlertIcon />
+            Tienes acceso a sesiones grupales. Revisa tu calendario para unirte.
+          </Alert>
+        )}
+        {isPatient &&
+          session?.user?.individualProgram &&
+          session?.user?.nextSessionDate && (
+            <Alert status="info" mt={4}>
+              <AlertIcon />
+              Tu próxima sesión individual es el{" "}
+              {new Date(session.user.nextSessionDate).toLocaleDateString()}.
+            </Alert>
+          )}
       </VStack>
     </Container>
   );

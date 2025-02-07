@@ -26,8 +26,22 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(200).json({
       message: "Este usuario proviene de Google y no tiene un _id en la DB",
       userData: {
-        email: session.user.email,
-      },
+        name: user.name,
+        surname: user.surname || "",
+        email: user.email,
+        phone: user.phone || "",
+        dni: user.dni || "",
+        contractSigned: user.contractSigned ?? false,
+        recoveryContact: user.recoveryContact || "",
+        isPatient: user.isPatient ?? false,
+        groupProgramPaid: user.groupProgramPaid ?? false,
+        individualProgram: user.individualProgram ?? false,
+        nextSessionDate: user.nextSessionDate ?? null
+      }
     });
+      
+  } catch (error) {
+    console.error('Error fetching user data:', error);
+    return res.status(500).json({ error: "Error al obtener los datos del usuario" });
   }
 }
