@@ -10,7 +10,7 @@ const CallToAction = () => {
             direction="column"
             align="center"
             justify="center"
-            bg="blackAlpha.900"
+            bg="black.50"
             position={"fixed"}
             bottom={0}
             w={"full"}

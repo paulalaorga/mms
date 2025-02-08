@@ -5,7 +5,7 @@ import Image from "next/image";
 
 const Navbar = () => {
   return (
-    <Box bg="brand.200" color="white" py={3} px={6} zIndex={2}>
+    <Box bg="brand.200" color="white" py={3} px={6} zIndex={100} position={"sticky"} top={0}>
       <Flex justify="space-between" align="center">
         <Link as={NextLink} href="/">
           <Image src="/muchomejorsin.svg" alt="Logo" width={80} height={80} />
