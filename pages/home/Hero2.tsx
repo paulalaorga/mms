@@ -9,7 +9,7 @@ export default function Hero2() {
     <div id="hero2">
       <Box
         bg="white"
-        height={"100vh"}
+        height={"80vh"}
         zIndex={2}
         position={"relative"}
         display="flex"
@@ -17,7 +17,6 @@ export default function Hero2() {
         justifyContent="center"
         alignItems="center"
         textAlign="center"
-        top={0}
       >
         <Heading
           as="h1"
@@ -26,7 +25,7 @@ export default function Hero2() {
           letterSpacing={"wide"}
           fontWeight={"500"}
           maxW={"80%"}
-          pt={4}
+          pt={20}
         >
           NADA DE COMPLICACIONES: 3 PASOS Y EMPIEZAS TU RECUPERACIÓN CON MMS
           AHORA MISMO

@@ -36,7 +36,7 @@ export default function Hero1() {
   };
 
   return (
-    <Box position="relative" minH="100vh" display="flex" flexDirection="column">
+    <Box position="relative" minH="70vh" display="flex" flexDirection="column">
       {/* Contenedor para la imagen de fondo */}
       <Box
         position="absolute"
