@@ -38,13 +38,13 @@ export default function Footer() {
               Síguenos
             </Heading>
             <Flex gap={4}>
-              <Link href="https://facebook.com" isExternal>
+              <Link href="https://www.tiktok.com/@santirotaeche" isExternal>
                 <Image src={tiktok} alt="tiktok" width={30} height={30}/>
               </Link>
-              <Link href="https://instagram.com" isExternal>
+              <Link href="https://youtube.com/@muchomejorsin2020" isExternal>
                 <Image src={youtube} alt="youtube" width={30} height={30}/>
               </Link>
-              <Link href="https://twitter.com" isExternal>
+              <Link href="https://www.instagram.com/therapy_victim" isExternal>
                 <Image src={instagram} alt="instagram" width={30} height={30}/>
               </Link>
             </Flex>
