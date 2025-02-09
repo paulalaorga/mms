@@ -22,7 +22,7 @@ export default function Hero5() {
           position={"relative"}
           zIndex={1}
           mt={10} 
-          mb={100}
+   
         >
           <FAQ />
         </Container>

@@ -7,6 +7,7 @@ import Hero2 from "./home/Hero2";
 import Hero3 from "./home/Hero3";
 import Hero4 from "./home/Hero4";
 import Hero5 from "./home/Hero5";
+import Footer from "@/components/layout/Footer";
 
 
 export default function HomePage() {
@@ -18,6 +19,7 @@ export default function HomePage() {
           <Hero3 />
           <Hero4 />
           <Hero5 />
+          <Footer />
       <CallToAction />
     </>
   );
