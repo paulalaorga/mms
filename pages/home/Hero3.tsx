@@ -58,24 +58,22 @@ export default function Hero3() {
             program="FUNDAMENTAL"
             title="Terapia de Grupo"
             description="Sesiones grupales, pero con el enfoque siempre en ti y tu proceso individual de recuperación"
-            /*             href="/programa-de-grupo"
-             */
+            programPage="/programa-de-grupo"
           />
           <Hero3Card
             image={individualImg.src}
             program="individual"
             title="programa personalizado"
             description="Adaptado a tus necesidades particulares, ofreciéndote un plan de recuperación personalizado"
-            /*             href="/programa-individual"
-             */
+            programPage="/programa-individual"
+            
           />
           <Hero3Card
             image={familiaImg.src}
             program="Familia"
             title="Te ayudamos a ayudar"
             description="Te enseñamos a pedirle que acepte su situación, que acepte la ayuda que necesita y a encontrarla"
-            /*             href="/programa-familia"
-             */
+            programPage="/programa-familia"
           />
         </Container>
       </Box>

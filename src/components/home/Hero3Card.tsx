@@ -1,12 +1,14 @@
 import { Box, Text, Heading, Flex } from "@chakra-ui/react";
 import { PiArrowCircleRightDuotone } from "react-icons/pi";
 import { useEffect, useRef, useState } from "react";
+import NextLink from "next/link";
 
 interface Hero3CardProps {
   image: string;
   program: string;
   title: string;
   description: string;
+  programPage: string;
 }
 
 const Hero3Card: React.FC<Hero3CardProps> = ({
@@ -14,6 +16,7 @@ const Hero3Card: React.FC<Hero3CardProps> = ({
   program,
   title,
   description,
+  programPage
 }) => {
   const programRef = useRef<HTMLHeadingElement>(null);
   const mmsRef = useRef<HTMLHeadingElement>(null);
@@ -28,6 +31,8 @@ const Hero3Card: React.FC<Hero3CardProps> = ({
 
   return (
     <Box
+      as={NextLink}
+      href={programPage}
       flex="1"
       minH="300px"
       display="flex"
@@ -53,6 +58,9 @@ const Hero3Card: React.FC<Hero3CardProps> = ({
         height: "100%",
         bg: "rgba(0, 0, 0, 0.5)",
       }}
+      _hover={{
+        transform: "scale(1.1)", // Efecto de zoom al pasar el mouse
+    }} 
     >
       {/* Contenido sobre el fondo */}
       <Box bottom={"-25%"} position="relative" zIndex={1} width="100%">

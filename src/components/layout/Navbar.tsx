@@ -39,16 +39,20 @@ const Navbar = () => {
           >
             Noticias
           </Link>
-          <Button textTransform= "uppercase" fontWeight="600"
-            as={NextLink}
+          <Button textTransform= "uppercase" 
+            as={Link}
             href="/matricula"
             colorScheme="white"
+            borderColor={"black"}
             bg={"black.200"}
             variant="outline"
             rounded={"full"}
-            _hover={{ textDecoration: "underline" }}
+            _hover={{
+              transform: "scale(1.1)", // Efecto de zoom al pasar el mouse
+              textDecoration:"none"
+            }} 
           >
-            Matricúlate ahora
+          Matricúlate ahora
             </Button>
           <Link
             as={NextLink}

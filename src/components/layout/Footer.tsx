@@ -4,6 +4,7 @@ import {
   Link,
   Heading,
   VStack,
+  Text
 } from "@chakra-ui/react";
 import Image from "next/image";
 import Logo from "../../../public/MMS.svg";
@@ -77,6 +78,11 @@ export default function Footer() {
               <Link href="/contact">Política de privacidad</Link>
             </VStack>
           </Flex>
+        </Flex>
+        <Flex w="100%" borderTop="1px solid white" mt={6} pt={4} justifyContent="center">
+          <Text fontSize="sm" color="whiteAlpha.700">
+            © 2025 Mucho Mejor Sin Dependencias S.L. Todos los derechos reservados.
+          </Text>
         </Flex>
       </Container>
     </footer>

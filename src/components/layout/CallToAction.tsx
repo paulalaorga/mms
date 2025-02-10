@@ -31,8 +31,9 @@ const CallToAction = () => {
                 variant="solid"
                 rounded={"full"}
                 mt={4}
-                _hover={{ textDecoration: "underline", bg: "white" }}
-            >
+                _hover={{
+                    transform: "scale(1.1)", // Efecto de zoom al pasar el mouse
+                }}            >
                 Agenda una consulta gratuita
             </Button>
         </Flex>
