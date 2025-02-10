@@ -41,7 +41,7 @@ const Navbar = () => {
           </Link>
           <Button textTransform= "uppercase" 
             as={Link}
-            href="/matricula"
+            href="/register"
             colorScheme="white"
             borderColor={"black"}
             bg={"black.200"}
