@@ -34,9 +34,11 @@ const VideoCard: React.FC<VideoCardProps> = ({ thumbnail, videoUrl }) => {
         borderRadius="md"
         overflow="hidden"
         position="relative"
-        width="30%" // Tamaño fijo del recuadro
+        flex="1" // Asegura que todas las tarjetas tengan el mismo tamaño
+        maxWidth={["100%", "48%", "350px"]} // 100% en móvil, 48% en tablet, 350px e
         height="80%" // Ajusta según necesidad
         display="flex"
+        aspectRatio="16/9"
         justifyContent="center"
         alignItems="center"
         _hover={{ transform: "scale(1.05)", transition: "0.3s" }}
@@ -56,7 +58,7 @@ const VideoCard: React.FC<VideoCardProps> = ({ thumbnail, videoUrl }) => {
           left="50%"
           transform="translate(-50%, -50%)"
         >
-          <FaRegPlayCircle size="50px" color="white" />
+          <FaRegPlayCircle size={"40px"} color="white" />
         </Box>
       </Box>
 

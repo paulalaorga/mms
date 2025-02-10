@@ -1,6 +1,6 @@
 import { Box, Text, Heading, Flex } from "@chakra-ui/react";
 import { PiArrowCircleRightDuotone } from "react-icons/pi";
-import { useEffect, useRef, useState } from "react";
+import { useRef } from "react";
 import NextLink from "next/link";
 
 interface Hero3CardProps {
@@ -20,21 +20,14 @@ const Hero3Card: React.FC<Hero3CardProps> = ({
 }) => {
   const programRef = useRef<HTMLHeadingElement>(null);
   const mmsRef = useRef<HTMLHeadingElement>(null);
-  const [textWidth, setTextWidth] = useState(0);
 
-  useEffect(() => {
-    if (programRef.current && mmsRef.current) {
-      const programWidth = programRef.current.offsetWidth;
-      setTextWidth(programWidth);
-    }
-  }, [program]); // Se actualiza si `program` cambia
 
   return (
     <Box
       as={NextLink}
       href={programPage}
       flex="1"
-      minH="300px"
+      minH={["250px", "300px", "350px"]} // Tamaños responsivos
       display="flex"
       flexDirection="column"
       alignItems="center"
@@ -48,7 +41,8 @@ const Hero3Card: React.FC<Hero3CardProps> = ({
       backgroundPosition="center"
       backgroundRepeat="no-repeat"
       color="white"
-      p={6}
+      p={[4, 6, 8]} // Espaciado adaptable
+      transition="transform 0.3s ease-in-out"
       _before={{
         content: '""',
         position: "absolute",
@@ -59,64 +53,59 @@ const Hero3Card: React.FC<Hero3CardProps> = ({
         bg: "rgba(0, 0, 0, 0.5)",
       }}
       _hover={{
-        transform: "scale(1.1)", // Efecto de zoom al pasar el mouse
-    }} 
+        transform: "scale(1.05)", // Menos agresivo en pantallas táctiles
+      }}
     >
-      {/* Contenido sobre el fondo */}
-      <Box bottom={"-25%"} position="relative" zIndex={1} width="100%">
-        <Flex justifyContent="center" gap={3} alignItems="center" width="100%">
-          {/* Heading y Icono en la misma línea, centrados */}
-          <Box
-            display="flex"
-            flexDirection="column"
-            alignItems="center"
-            justifyContent="center"
-          >
-            <Flex
-              flexDirection="column"
-              alignItems="center"
-              justifyContent="center"
-              width="fit-content"
-              minWidth="max-content" // Asegura que MMS se expanda según el contenido de {program}
+      {/* Contenido sobre la imagen */}
+      <Box position="relative" zIndex={1} width="100%">
+        <Flex
+          flexDirection="column"
+          alignItems="center"
+          justifyContent="center"
+          width="100%"
+        >
+          {/* Sección de encabezado */}
+          <Flex flexDirection="column" alignItems="center">
+            <Heading
+              as="h2"
+              fontSize={["2xl","5xl", "6xl", "3xl"]}
+              fontWeight="bold"
+              textAlign="center"
+              ref={mmsRef}
             >
-              <Heading
-                as="h2"
-                fontSize="3xl"
-                fontWeight="bold"
-                textAlign="center"
-                ref={mmsRef}
-                minWidth={textWidth ? `${textWidth}px` : "auto"} // Ajusta al ancho de {program}
-                letterSpacing={textWidth ? `${textWidth / 10}px` : "normal"} // Ajusta espaciado dinámicamente
-              >
-                MMS
-              </Heading>
+              MMS
+            </Heading>
 
-              {/* Programa con referencia para capturar su ancho */}
-              <Heading
-                as="h3"
-                fontSize="2xl"
-                fontWeight="bold"
-                textAlign="center"
-                ref={programRef} // Captura el ancho de este texto
-              >
-                {program}
-              </Heading>
-            </Flex>
-          </Box>
-          <Text
-            letterSpacing={"widest"}
-            fontWeight={"extrabold"}
-            display={"inline-block"}
-            textTransform={"uppercase"}
-            fontSize="sm"
-            maxWidth={"min-content"}
-          >
-            {title}
+            <Heading
+              as="h3"
+              fontSize={["xl", "2xl", "4xl", "2xl"]}
+              fontWeight="bold"
+              textAlign="center"
+              ref={programRef}
+            >
+              {program}
+            </Heading>
+          </Flex>
+
+          {/* Título y Flecha */}
+          <Flex alignItems="center" gap={2} mt={2}>
+            <Text
+              letterSpacing="widest"
+              fontWeight="extrabold"
+              textTransform="uppercase"
+              fontSize={["sm", "md"]}
+              wordBreak="break-word"
+            >
+              {title}
+            </Text>
+            <PiArrowCircleRightDuotone fontSize="2rem" />
+          </Flex>
+
+          {/* Descripción */}
+          <Text mt={3} fontSize={["sm", "md"]} px={[2, 4]}>
+            {description}
           </Text>
-          <PiArrowCircleRightDuotone fontSize="3rem" />
         </Flex>
-
-        <Text mt={3}>{description}</Text>
       </Box>
     </Box>
   );
