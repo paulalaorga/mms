@@ -9,30 +9,32 @@ export default function Hero3() {
     <div id="hero3">
       <Box
         bg="black.50"
-        height={"100vh"}
+        minHeight="100vh" // Permite que el contenido crezca si es necesario
         zIndex={2}
-        position={"relative"}
+        position="relative"
         display="flex"
         flexDirection="column"
         alignItems="center"
         textAlign="center"
-        mt={20}
-        p={20}
+        mt={[10, 20]} // Espaciado dinámico en pantallas pequeñas y grandes
+        px={[4, 8, 20]} // Padding más adaptable
+        py={[10, 20]}
       >
         <Heading
           as="h1"
-          fontSize={"44px"}
+          fontSize={["28px", "36px", "44px"]} // Tamaños responsivos
           textTransform="uppercase"
-          letterSpacing={"wide"}
-          fontWeight={"500"}
-          maxW={"80%"}
+          letterSpacing="wide"
+          fontWeight="500"
+          maxW="80%"
           pt={4}
-          color={"white"}
+          color="white"
         >
           ELIGE EL PROGRAMA QUE NECESITAS
         </Heading>
-        <Flex display="inline" flexDirection="column" alignItems="center">
-          <Text as="p" color="white" mt={4}>
+
+        <Flex flexDirection="column" alignItems="center">
+          <Text as="p" color="white" mt={4} fontSize={["sm", "md", "lg"]}>
             MMS se adapta a tu individualidad, por eso hemos ideado una gama
             diversa de{" "}
             <Text as="span" fontWeight="bold" color="accent.50">
@@ -43,8 +45,9 @@ export default function Hero3() {
         </Flex>
 
         <Container
-          minW={"90vw"}
+          maxW="100%" // Para evitar desbordamientos
           display="flex"
+          flexDirection={["column", "column","column", "row"]} // Columna en móviles, fila en escritorio
           alignItems="stretch"
           justifyContent="center"
           textAlign="center"
@@ -66,7 +69,6 @@ export default function Hero3() {
             title="programa personalizado"
             description="Adaptado a tus necesidades particulares, ofreciéndote un plan de recuperación personalizado"
             programPage="/programa-individual"
-            
           />
           <Hero3Card
             image={familiaImg.src}

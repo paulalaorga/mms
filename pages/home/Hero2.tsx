@@ -9,7 +9,7 @@ export default function Hero2() {
     <div id="hero2">
       <Box
         bg="white"
-        height={"80vh"}
+        minH={"80vh"}
         zIndex={2}
         position={"relative"}
         display="flex"
@@ -20,26 +20,28 @@ export default function Hero2() {
       >
         <Heading
           as="h1"
-          fontSize={"44px"}
+          fontSize={["22px", "44px"]}
           textTransform="uppercase"
           letterSpacing={"wide"}
           fontWeight={"500"}
           maxW={"80%"}
-          pt={20}
+          minH={"20vh"}
+          pt={["20%","10%"]}
         >
           NADA DE COMPLICACIONES: 3 PASOS Y EMPIEZAS TU RECUPERACIÓN CON MMS
           AHORA MISMO
         </Heading>
 
         <Container
-          minW={"80vw"}
+          width={["80vw", "80vw", "50vw", "80vw"]}
           display="flex"
+          flexDirection={["column", "column","column", "row"]}
           alignItems="stretch" // Asegura que todas las cajas tengan la misma altura
           justifyContent="center"
           textAlign="center"
           position="relative"
           zIndex={1}
-          gap={6} // Espaciado uniforme entre las cajas
+          gap={["2","6"]} // Espaciado uniforme entre las cajas
         >
           <Hero2Card
             icon={<LuUsers fontSize="2.5rem" />}

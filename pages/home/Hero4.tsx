@@ -9,18 +9,18 @@ export default function Hero4() {
     <div id="hero4">
       <Box
         bg="white"
-        height={"70vh"}
+        minH={"100%"}
         zIndex={2}
         position={"relative"}
         display="flex"
-        flexDirection="column"
+        flexDirection={"column"}
         alignItems="center"
         textAlign="center"
-        top={100}
+        pt={20}
       >
         <Heading
           as="h1"
-          fontSize={"44px"}
+          fontSize={["2rem", "3rem"]}
           textTransform="uppercase"
           letterSpacing={"wide"}
           fontWeight={"500"}
@@ -33,7 +33,8 @@ export default function Hero4() {
         <Container
           minW={"100%"}
           display="flex"
-          alignItems="stretch"
+          flexDirection={["column", "column", "row", "row"]}
+          alignItems={["center", "center", "stretch"]}
           justifyContent="center"
           textAlign="center"
           position="relative"

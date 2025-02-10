@@ -13,9 +13,7 @@ import {
   Text,
   Flex,
 } from "@chakra-ui/react";
-
 import { Link as ChakraLink } from "@chakra-ui/react";
-
 import { MdKeyboardDoubleArrowDown } from "react-icons/md";
 import { FaRegPlayCircle } from "react-icons/fa";
 import Image from "next/image";
@@ -36,7 +34,7 @@ export default function Hero1() {
   };
 
   return (
-    <Box position="relative" height="70vh" display="flex" flexDirection="column">
+    <Box position="relative" height={["78vh", "80vh"]} width="100vw" display="flex" flexDirection="column">
       {/* Contenedor para la imagen de fondo */}
       <Box
         position="absolute"
@@ -46,9 +44,13 @@ export default function Hero1() {
         height="100%"
         zIndex={-1}
       >
-        {/* Imagen de fondo */}
-        <Image src={mountains} alt="MMS" fill style={{ objectFit: "cover" }} />
-
+        <Image
+          src={mountains}
+          alt="MMS"
+          fill
+          style={{ objectFit: "cover" }}
+          priority
+        />
         {/* Overlay para oscurecer la imagen */}
         <Box
           position="absolute"
@@ -56,69 +58,64 @@ export default function Hero1() {
           left={0}
           width="100%"
           height="100%"
-          bg="rgba(0, 0, 0, 0.5)" // Oscurecimiento
+          bg="rgba(0, 0, 0, 0.5)"
           zIndex={0}
         />
       </Box>
 
       <Container
-        maxW="container.lg"
-        minH="100vh"
+        minH="80vh"
         display="flex"
         flexDirection="column"
         alignItems="center"
-        justifyContent="flex-start"
+        justifyContent="space-evenly"
         textAlign="center"
         position="relative"
         zIndex={1}
-        px={4}
-        pt={10}
+        maxW="90vw"
       >
         <Flex
           direction="column"
           align="center"
-          alignItems={"center"}
           textAlign="center"
-          mt={50}
-          width="100%"
+          width="-webkit-fill-available"
         >
-          {/* Contenedor con maxWidth para controlar el ancho */}
-          <Box textAlign="center" maxWidth="fit-content">
+          {/* Contenedor con ajuste de ancho */}
+          <Box  minW="90%">
             <Heading
-              fontSize={["32px", "42px", "52px"]}
+              fontSize={["34px", "46px", "68px"]}
               textTransform="uppercase"
               color="white"
               textAlign="center"
-              whiteSpace="nowrap"
-              letterSpacing={["1px", "2px", "3px", "4px"]} // Ajusta el espaciado
+              letterSpacing={["0.5px", "1px", "2px"]}
+              whiteSpace="normal" // Permite que el texto se adapte
             >
               Somos el primer programa de recuperación
             </Heading>
 
-            {/* "100% online" con letterSpacing dinámico y maxWidth */}
             <Heading
-              fontSize={["42px", "52px", "72px"]}
+              fontSize={["42px", "48px", "84px"]}
               color="accent.50"
               fontWeight="bolder"
               textTransform="uppercase"
               textAlign="center"
-              whiteSpace="nowrap"
-              letterSpacing={["6px", "16px", "26px", "36px"]} // Ajusta el espaciado
+              letterSpacing={["3px", "3px", "6px", "46px"]}
               maxWidth="100%"
-              minWidth="100%" // Nunca más ancho que el Heading de arriba
               display="block"
+              mt={2}
+              shadow={"base"}
             >
               100% online
             </Heading>
           </Box>
 
           <Heading
-            fontSize={["28px", "36px", "42px"]}
+            fontSize={["24px", "32px", "40px"]}
             textTransform="uppercase"
             fontWeight="bold"
             color="white"
             textAlign="center"
-            mt={4}
+            mt={3}
           >
             pero es que además somos muy buenos
           </Heading>
@@ -133,8 +130,8 @@ export default function Hero1() {
             cursor="pointer"
             _hover={{ color: "accent.100" }}
           >
-            <Icon as={FaRegPlayCircle} boxSize={8} />
-            <Text fontSize={"24px"} fontWeight={"bolder"}>
+            <Icon as={FaRegPlayCircle} boxSize={[6, 8]} /> {/* Ajusta el tamaño en móvil */}
+            <Text fontSize={["18px", "24px"]} fontWeight="bolder">
               Conócenos
             </Text>
           </HStack>
@@ -155,12 +152,10 @@ export default function Hero1() {
       </Container>
 
       <Box
-        position="absolute" // Fijo en la pantalla
-        bottom={0} // Distancia desde el borde inferior
-        left="50%" // Lo centra horizontalmente
-        transform="translateX(-50%)" // Ajuste para centrarlo correctamente
-        alignItems="center"
-        justifyContent="center"
+        position="absolute"
+        bottom={4}
+        left="50%"
+        transform="translateX(-50%)"
         zIndex={10}
       >
         <ChakraLink
@@ -169,11 +164,11 @@ export default function Hero1() {
           onClick={scrollTo}
         >
           <HStack display="flex" flexDirection="column">
-            <Text>¿Cómo funciona MMS?</Text>
+            <Text fontSize={["14px", "16px"]}>¿Cómo funciona MMS?</Text>
             <Icon
               as={MdKeyboardDoubleArrowDown}
               color="brand.200"
-              boxSize={8}
+              boxSize={[6, 8]} // Reduce tamaño en móvil
               mt={-2}
             />
           </HStack>
