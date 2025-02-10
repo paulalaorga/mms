@@ -9,7 +9,7 @@ export default function Hero4() {
     <div id="hero4">
       <Box
         bg="white"
-        height={"100vh"}
+        height={"70vh"}
         zIndex={2}
         position={"relative"}
         display="flex"

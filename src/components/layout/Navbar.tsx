@@ -14,28 +14,28 @@ const Navbar = () => {
           <Link textTransform= "uppercase" fontWeight="600" fontSize={["sm", "md", "lg", "xl"]}
             as={NextLink}
             href="/familia"
-            _hover={{ textDecoration: "underline" }}
+            _hover={{ color: "black" }}
           >
             Familia
           </Link>
           <Link textTransform= "uppercase" fontWeight="600" fontSize={["sm", "md", "lg", "xl"]}
             as={NextLink}
             href="/programas"
-            _hover={{ textDecoration: "underline" }}
+            _hover={{ color: "black" }}
           >
             Programas
           </Link>
           <Link textTransform= "uppercase" fontWeight="600" fontSize={["sm", "md", "lg", "xl"]}
             as={NextLink}
             href="/equipo"
-            _hover={{ textDecoration: "underline" }}
+            _hover={{ color: "black" }}
           >
             El Equipo
           </Link>
           <Link textTransform= "uppercase" fontWeight="600" fontSize={["sm", "md", "lg", "xl"]}
             as={NextLink}
             href="/noticias"
-            _hover={{ textDecoration: "underline" }}
+            _hover={{ color: "black" }}
           >
             Noticias
           </Link>
@@ -57,7 +57,7 @@ const Navbar = () => {
           <Link
             as={NextLink}
             href="/login"
-            _hover={{ textDecoration: "underline" }}
+            _hover={{ color: "black", transform: "scale(1.1)" }}
           >
             <VscAccount fontSize="2rem" />
           </Link>

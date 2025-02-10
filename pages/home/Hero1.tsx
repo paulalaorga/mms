@@ -36,14 +36,14 @@ export default function Hero1() {
   };
 
   return (
-    <Box position="relative" minH="70vh" display="flex" flexDirection="column">
+    <Box position="relative" height="70vh" display="flex" flexDirection="column">
       {/* Contenedor para la imagen de fondo */}
       <Box
         position="absolute"
         top={0}
         left={0}
         width="100%"
-        height="69.5%"
+        height="100%"
         zIndex={-1}
       >
         {/* Imagen de fondo */}
@@ -156,7 +156,7 @@ export default function Hero1() {
 
       <Box
         position="absolute" // Fijo en la pantalla
-        bottom={210} // Distancia desde el borde inferior
+        bottom={0} // Distancia desde el borde inferior
         left="50%" // Lo centra horizontalmente
         transform="translateX(-50%)" // Ajuste para centrarlo correctamente
         alignItems="center"
