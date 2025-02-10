@@ -18,6 +18,7 @@
     "@emotion/styled": "^11.14.0",
     "@types/jsonwebtoken": "^9.0.8",
     "@types/next-auth": "^3.15.0",
+    "@vercel/analytics": "^1.4.1",
     "bcryptjs": "^2.4.3",
     "dotenv": "^16.4.7",
     "framer-motion": "^12.1.0",
