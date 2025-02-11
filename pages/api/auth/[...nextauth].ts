@@ -65,14 +65,31 @@ export const authOptions: AuthOptions = {
 
     async jwt({ token, user }) {
       if (user) {
-        token.sub = user.id;
+        token.id = user.id;
         token.role = user.role;
+        token.surname = user.surname;
+        token.isPatient = user.isPatient;
+        token.groupProgramPaid = user.groupProgramPaid;
+        token.individualProgram = user.individualProgram;
+        token.nextSessionDate = user.nextSessionDate ? user.nextSessionDate.toISOString() : null;
       }
       return token;
     },
+  
     async session({ session, token }) {
-      session.user.id = token.sub ?? "";
-      session.user.role = (token.role as string) ?? "";
+      session.user = {
+        ...session.user,
+        id: token.sub ?? "",
+        role: (token.role as string) ?? "",
+        surname: (token.surname as string) ?? "",
+        isPatient: (token.isPatient as boolean) ?? false,
+        groupProgramPaid: (token.groupProgramPaid as boolean) ?? false,
+        individualProgram: (token.individualProgram as boolean) ?? false,
+        nextSessionDate:
+        token.nextSessionDate && typeof token.nextSessionDate === "string"
+        ? new Date(token.nextSessionDate)
+        : null,
+      };
       return session;
     },
     async redirect({ baseUrl }) {

@@ -12,15 +12,14 @@ import {
   AlertIcon,
   Box,
 } from "@chakra-ui/react";
+import { IUser }  from "@/models/User";
 import UserLayout from "./layout";
 import ProfileProgress from "./profile/ProfileProgress";
 
 export default function UserDashboard() {
   const { data: session, status } = useSession();
-  const [error, setError] = useState("");
-  const [showProfileProgress, setShowProfileProgress] = useState(true);
-  const [isPatient, setIsPatient] = useState(false);
-
+  const [error, setError] = useState<string | null>(null);
+  const [userData, setUserData] = useState<IUser | null>(null);
 
   useEffect(() => {
     if (!session?.user?.email) return;
@@ -30,12 +29,12 @@ export default function UserDashboard() {
         const res = await fetch("/api/user/profile");
         if (!res.ok) throw new Error("Error al cargar los datos del perfil.");
 
-        const data = await res.json();
+        const data: IUser = await res.json();
         console.log("✅ Datos del usuario recibidos:", data);
-
-
+        setUserData(data);
       } catch (error) {
         console.error("Error al cargar los datos del perfil:", error);
+        setError("Error al cargar los datos del perfil.");
       }
     };
 
@@ -51,27 +50,32 @@ export default function UserDashboard() {
   }
 
   if (!session?.user) {
-    setError("No se pudo cargar la sesión de usuario");
+    return (
+      <Container centerContent py={10}>
+        <Alert status="error">
+          <AlertIcon />
+          No se pudo cargar la sesión de usuario.
+        </Alert>
+      </Container>
+    );
   }
 
   return (
     <Container centerContent py={10}>
       <VStack spacing={6} align="center">
         <Heading size="lg">
-          Bienvenido, {session?.user?.name || "Usuario"}{" "}
-          {session?.user?.surname || ""} 🎉
+          Bienvenido, {session.user.name || "Usuario"}{" "}
+          {userData?.surname || ""} 🎉
         </Heading>
         <Text fontSize="lg">Este es tu panel de usuario</Text>
 
         {/* Mostrar barra de progreso solo si faltan datos */}
-        {showProfileProgress && (
-          <Box w="100%" alignContent="center" textAlign="center">
-            <ProfileProgress />
-          </Box>
-        )}
+        <Box w="100%" alignContent="center" textAlign="center">
+          <ProfileProgress />
+        </Box>
 
         {/* Si el usuario NO es paciente, mostrar programas disponibles */}
-        {!isPatient && (
+        {!userData?.isPatient && (
           <Alert status="info" mt={4}>
             <AlertIcon />
             No estás registrado en ningún programa. Consulta los programas
@@ -80,7 +84,7 @@ export default function UserDashboard() {
         )}
 
         {/* Mostrar alerta si el usuario tiene acceso a sesiones grupales */}
-        {!session?.user?.isPatient && session?.user?.groupProgramPaid && (
+        {userData?.isPatient && userData?.groupProgramPaid && (
           <Alert status="success" mt={4}>
             <AlertIcon />
             Tienes acceso a sesiones grupales. Revisa tu calendario para unirte.
@@ -88,11 +92,11 @@ export default function UserDashboard() {
         )}
 
         {/* Mostrar alerta de próxima sesión individual */}
-        {session?.user?.individualProgram && session?.user?.nextSessionDate && (
+        {userData?.individualProgram && userData?.nextSessionDate && (
           <Alert status="info" mt={4}>
             <AlertIcon />
             Tu próxima sesión individual es el{" "}
-            {new Date(session.user.nextSessionDate).toLocaleDateString()}.
+            {new Date(userData.nextSessionDate).toLocaleDateString()}.
           </Alert>
         )}
 
