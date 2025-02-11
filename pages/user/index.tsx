@@ -18,9 +18,7 @@ import ProfileProgress from "./profile/ProfileProgress";
 export default function UserDashboard() {
   const { data: session, status } = useSession();
   const [error, setError] = useState("");
-  const [showProfileProgress, setShowProfileProgress] = useState(true);
-  const [isPatient, setIsPatient] = useState(false);
-
+  const [isPatient, setIsPatient] = useState(false); // ✅ Corregido
 
   useEffect(() => {
     if (!session?.user?.email) return;
@@ -33,6 +31,8 @@ export default function UserDashboard() {
         const data = await res.json();
         console.log("✅ Datos del usuario recibidos:", data);
 
+        // ✅ Verifica si el usuario es paciente y actualiza el estado
+        setIsPatient(data.isPatient ?? false);
 
       } catch (error) {
         console.error("Error al cargar los datos del perfil:", error);
@@ -40,7 +40,7 @@ export default function UserDashboard() {
     };
 
     fetchUserData();
-  }, [session]);
+  }, [session]); // ✅ Dependencia correcta
 
   if (status === "loading") {
     return (
@@ -64,11 +64,9 @@ export default function UserDashboard() {
         <Text fontSize="lg">Este es tu panel de usuario</Text>
 
         {/* Mostrar barra de progreso solo si faltan datos */}
-        {showProfileProgress && (
-          <Box w="100%" alignContent="center" textAlign="center">
-            <ProfileProgress />
-          </Box>
-        )}
+        <Box w="100%" alignContent="center" textAlign="center">
+          <ProfileProgress />
+        </Box>
 
         {/* Si el usuario NO es paciente, mostrar programas disponibles */}
         {!isPatient && (
@@ -80,7 +78,7 @@ export default function UserDashboard() {
         )}
 
         {/* Mostrar alerta si el usuario tiene acceso a sesiones grupales */}
-        {!session?.user?.isPatient && session?.user?.groupProgramPaid && (
+        {session?.user?.isPatient && session?.user?.groupProgramPaid && (
           <Alert status="success" mt={4}>
             <AlertIcon />
             Tienes acceso a sesiones grupales. Revisa tu calendario para unirte.
