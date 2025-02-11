@@ -62,6 +62,7 @@ export const authOptions: AuthOptions = {
       }
       return true;
     },
+
     async jwt({ token, user }) {
       if (user) {
         token.sub = user.id;
