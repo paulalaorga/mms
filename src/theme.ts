@@ -11,8 +11,18 @@ const config: ThemeConfig = {
 const theme = extendTheme({
   config,
   fonts: {
-    body: "Roboto Thin, sans-serif",
-    heading: "Bebas Neue, sans-serif"
+    heading: `"Bebas Neue", sans-serif`, // Fuente para el cuerpo
+    body: `"Roboto", sans-serif`, // Fuente para los encabezados
+  },
+  styles: {
+    global: {
+      "html, body": {
+        fontFamily: "body",
+      },
+      "h1, h2, h3, h4, h5, h6": {
+        fontFamily: "heading",
+      },
+    },
   },
   colors: {
       brand: {
@@ -30,7 +40,7 @@ const theme = extendTheme({
         250: "#c85611",
       },
       black: {
-        50: "#000000",
+        50: "#202020",
         100: "#000000",
         150: "#000000",
         200: "#000000", // Base color
