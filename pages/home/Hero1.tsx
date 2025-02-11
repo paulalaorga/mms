@@ -103,7 +103,6 @@ export default function Hero1() {
               maxWidth="100%"
               display="block"
               mt={2}
-              shadow={"base"}
             >
               100% online
             </Heading>

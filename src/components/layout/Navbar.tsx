@@ -9,7 +9,7 @@ import Image from "next/image";
 
 const Navbar = () => {
   const { isOpen, onOpen, onClose } = useDisclosure();
-  const isMobile = useBreakpointValue({ base: true, md: true });
+  const isMobile = useBreakpointValue({ base: true, md: false });
 
   return (
     <Box bg="brand.200" color="white" py={3} px={6} zIndex={100} position="sticky" top={0}>
@@ -56,9 +56,8 @@ const Navbar = () => {
             fontSize="5xl"
             variant="ghost"
             color="white"
-            onClick={onOpen}
-            aria-label="Abrir menú"
-          />
+            onClick={onOpen} 
+            aria-label={""}          />
         )}
       </Flex>
 
