@@ -1,6 +1,6 @@
 {
     "functions": {
-      "api/auth/*": {
+      "api/auth/[...nextauth]": {
         "maxDuration": 30
       }
     }
