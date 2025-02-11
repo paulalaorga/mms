@@ -12,13 +12,15 @@ import {
   AlertIcon,
   Box,
 } from "@chakra-ui/react";
+import IUser from "@/models/User";
 import UserLayout from "./layout";
 import ProfileProgress from "./profile/ProfileProgress";
 
 export default function UserDashboard() {
   const { data: session, status } = useSession();
   const [error, setError] = useState("");
-  const [isPatient, setIsPatient] = useState(false); // ✅ Corregido
+  const [isPatient, setIsPatient] = useState(false);
+
 
   useEffect(() => {
     if (!session?.user?.email) return;
@@ -28,7 +30,7 @@ export default function UserDashboard() {
         const res = await fetch("/api/user/profile");
         if (!res.ok) throw new Error("Error al cargar los datos del perfil.");
 
-        const data = await res.json();
+        const data: typeof IUser = await res.json();
         console.log("✅ Datos del usuario recibidos:", data);
 
         // ✅ Verifica si el usuario es paciente y actualiza el estado
@@ -39,6 +41,7 @@ export default function UserDashboard() {
       }
     };
 
+    setIsPatient(session.user.isPatient || false);
     fetchUserData();
   }, [session]); // ✅ Dependencia correcta
 
@@ -64,9 +67,9 @@ export default function UserDashboard() {
         <Text fontSize="lg">Este es tu panel de usuario</Text>
 
         {/* Mostrar barra de progreso solo si faltan datos */}
-        <Box w="100%" alignContent="center" textAlign="center">
-          <ProfileProgress />
-        </Box>
+          <Box w="100%" alignContent="center" textAlign="center">
+            <ProfileProgress />
+          </Box>
 
         {/* Si el usuario NO es paciente, mostrar programas disponibles */}
         {!isPatient && (

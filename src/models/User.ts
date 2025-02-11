@@ -18,7 +18,7 @@ export interface IUser extends Document {
   isPatient?: boolean;
   groupProgramPaid?: boolean;
   individualProgram?: boolean;
-  nextSessionDate?: Date;
+  nextSessionDate?: string | null;
   provider?: string;
 }
 
@@ -40,7 +40,7 @@ const UserSchema = new Schema<IUser>({
   isPatient: { type: Boolean, default: false }, // ✅ Verificar si es paciente
   groupProgramPaid: { type: Boolean, default: false }, // ✅ Ha pagado el grupo
   individualProgram: { type: Boolean, default: false }, // ✅ Tiene programa individual
-  nextSessionDate: { type: Date, default: null }, // ✅ Próxima sesión individual
+  nextSessionDate: { type: String, default: null }, // ✅ Próxima sesión individual
   provider: { type: String}, // ✅ Proveedor de autenticación
 });
 
