@@ -89,10 +89,18 @@ export const authOptions: AuthOptions = {
 
     async redirect({ baseUrl }) {
       try {
-        const session = await fetch(`${baseUrl}/api/auth/session`).then((res) =>
-          res.json()
-        );
+        const response = await fetch(`${baseUrl}/api/auth/session`);
+        const sessionText = await response.text();
 
+        let session;
+        try {
+          session = JSON.parse(sessionText);
+        } catch (jsonError) {
+          console.error("🚨 Error al parsear JSON de /api/auth/session:", jsonError);
+          console.error("🔴 Respuesta inesperada:", sessionText);
+          return `${baseUrl}/error`;
+        }
+      
         if (!session || !session.user) {
           return `${baseUrl}/login`;
         }
