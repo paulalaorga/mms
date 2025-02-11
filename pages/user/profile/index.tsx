@@ -1,142 +1,329 @@
 "use client";
 
-import { useSession } from "next-auth/react";
 import { useState, useEffect } from "react";
-import { 
-  Spinner,
-  Box,
-  Button,
-  Container,
+import { useSession } from "next-auth/react";
+import {
+  Heading,
   FormControl,
   FormLabel,
-  Input,
-  VStack,
-  Heading,
-  Text,
-  Alert,
+  Checkbox,
   AlertIcon,
+  VStack,
+  Container,
+  Alert,
+  Modal,
+  ModalOverlay,
+  ModalContent,
+  ModalHeader,
+  ModalBody,
+  ModalFooter,
+  useDisclosure,
+  Text,
+  Link
 } from "@chakra-ui/react";
-
-interface User {
-  _id: string;
-  name: string;
-  email: string;
-  phone?: string;
-}
+import Input from "@/components/ui/Input";
+import MyButton from "@/components/ui/Button";
 
 export default function UserProfile() {
-  const { data: session } = useSession();
-  const [userData, setUserData] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
-  const [success, setSuccess] = useState("");
-  const [name, setName] = useState("");
-  const [phone, setPhone] = useState("");
+  const { data: session, update } = useSession();
+  const { isOpen, onOpen, onClose } = useDisclosure();
 
+  // Estados para los datos del usuario
+  const [userData, setUserData] = useState({
+    name: "",
+    surname: "",
+    email: "",
+    dni: "",
+    phone: "",
+    contractSigned: false,
+    recoveryContact: "",
+  });
+
+  const [password, setPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmNewPassword, setConfirmNewPassword] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [successMessage, setSuccessMessage] = useState("");
+  const [errorMessage, setErrorMessage] = useState("");
+  const [isGoogleUser, setIsGoogleUser] = useState(false);
+
+  // Cargar datos del usuario desde el backend
   useEffect(() => {
-  
+    if (!session?.user?.email) return;
+
     const fetchUserData = async () => {
       try {
-        console.log("🔍 Solicitando datos del usuario...");
-        const res = await fetch(`/api/user/profile`);
-        console.log("📡 Respuesta recibida:", res.status);
-  
-        if (!res.ok) throw new Error(`Error ${res.status}: ${await res.text()}`);
-        const data: User = await res.json();
-        console.log("✅ Datos del usuario obtenidos:", data);
-  
-        setUserData(data);
-        setName(data.name);
-        setPhone(data.phone || "");
-      } catch (err) {
-        console.error("❌ Error obteniendo datos del usuario:", err);
-        setError(err instanceof Error ? err.message : "Error desconocido");
-      } finally {
-        setLoading(false);
+        const res = await fetch("/api/user/profile");
+        if (!res.ok) throw new Error("Error al cargar los datos del perfil.");
+
+        const data = await res.json();
+        console.log("✅ Datos del usuario recibidos:", data);
+
+        const userData = data.userData || {}; // Acceder a la clave correcta
+
+        setUserData({
+          name: userData.name || "",
+          surname: userData.surname || "",
+          email: userData.email || "",
+          dni: userData.dni || "",
+          phone: userData.phone || "",
+          contractSigned: userData.contractSigned ?? false,
+          recoveryContact: userData.recoveryContact || "",
+        });
+
+        setIsGoogleUser(data.message?.includes("Google")); // Detectar si es usuario de Google
+      } catch {
+        setErrorMessage("Error al cargar los datos del perfil.");
       }
     };
-  
+
     fetchUserData();
-  }, []);
-  
+  }, [session]);
 
-  const handleUpdateProfile = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError("");
-    setSuccess("");
+  // Manejar cambios en los inputs
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value, type, checked } = e.target;
+    setUserData((prev) => ({
+      ...prev,
+      [name]: type === "checkbox" ? checked : value,
+    }));
+  };
 
-    const res = await fetch("/api/user/profile", {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name, phone }),
-    });
+  // Guardar cambios en el perfil
+  const handleSave = async () => {
+    setLoading(true);
+    setSuccessMessage("");
+    setErrorMessage("");
 
-    const data = await res.json();
+    if (!isGoogleUser && !password) {
+      setErrorMessage("Debes ingresar tu contraseña actual.");
+      setLoading(false);
+      return;
+    }
 
-    if (res.ok) {
-      setSuccess("Perfil actualizado correctamente");
-    } else {
-      setError(data.message || "No se pudo actualizar el perfil");
+    try {
+      const res = await fetch("/api/user/update-profile", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          ...userData,
+          currentPassword: isGoogleUser ? undefined : password, // Si es Google, no manda password
+        }),
+      });
+
+      if (!res.ok) throw new Error("Error al actualizar perfil.");
+
+      await update(); // Actualizar sesión en NextAuth
+      setSuccessMessage("Perfil actualizado correctamente.");
+    } catch {
+      setErrorMessage("Hubo un problema al actualizar tu perfil.");
+    } finally {
+      setLoading(false);
     }
   };
 
-  if (loading) {
-    return (
-      <Container centerContent>
-        <Spinner size="xl" />
-      </Container>
-    );
-  }
+  // Guardar nueva contraseña
+  const handleChangePassword = async () => {
+    if (newPassword !== confirmNewPassword) {
+      setErrorMessage("Las contraseñas no coinciden.");
+      return;
+    }
+
+    try {
+      const res = await fetch("/api/user/change-password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ newPassword }), // ✅ Enviar la nueva contraseña ingresada
+      });
+
+      const data = await res.json();
+      if (!res.ok)
+        throw new Error(data.message || "Error al cambiar la contraseña.");
+
+      setSuccessMessage("Contraseña actualizada correctamente.");
+      setNewPassword("");
+      setConfirmNewPassword("");
+      onClose(); // Cierra el modal
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Error al actualizar la contraseña.";
+      setErrorMessage(message);
+    }
+  };
 
   return (
-    <Container centerContent maxW="md" py="8">
-      <Box p={6} borderWidth={1} borderRadius={8} boxShadow="lg">
-        <VStack spacing={4}>
-          <Heading as="h1" size="lg">
-            Mi perfil
-          </Heading>
-          <Text>Bienvenido: {session?.user?.name}</Text>
+    <>
+      <Container maxW="container.md" py={10}>
+        <Heading textAlign={"center"} size="lg" mb={6}>
+          Tus datos de Usuario
+        </Heading>
 
-          {error && (
-            <Alert status="error">
-              <AlertIcon />
-              {error}
-            </Alert>
-          )}
-          {success && (
-            <Alert status="success">
-              <AlertIcon />
-              {success}
-            </Alert>
-          )}
+        {successMessage && (
+          <Alert status="success" mb={4}>
+            <AlertIcon />
+            {successMessage}
+          </Alert>
+        )}
+        {errorMessage && (
+          <Alert status="error" mb={4}>
+            <AlertIcon />
+            {errorMessage}
+          </Alert>
+        )}
 
-          <form onSubmit={handleUpdateProfile} style={{ width: "100%" }}>
-            <FormControl isRequired>
-              <FormLabel>Nombre</FormLabel>
+        <VStack spacing={4} align="stretch">
+          <FormControl>
+            <FormLabel>
+              Nombre actual:{" "}
+              {!userData.name && (
+                <Text display="inline" color="red">
+                  Faltan datos
+                </Text>
+              )}
+            </FormLabel>
+            <Input
+              placeholder="Nombre"
+              name="name"
+              value={userData.name}
+              onChange={handleChange}
+            />
+          </FormControl>
+
+          <FormControl>
+            <FormLabel>
+              Apellidos actuales:{"  "}
+              {!userData.surname &&  (
+                <Text display="inline" color="red">
+                  Faltan datos
+                </Text>
+              )}
+            </FormLabel>
+            <Input
+              placeholder="Apellidos"
+              name="surname"
+              value={userData.surname}
+              onChange={handleChange}
+            />
+          </FormControl>
+
+          <FormControl isReadOnly>
+            <FormLabel>Email registrado:</FormLabel>
+            <Input value={userData.email} isDisabled />
+          </FormControl>
+
+          <FormControl>
+            <FormLabel>
+              DNI/Pasaporte actual:{" "}
+              {!userData.dni && (
+                <Text display="inline" color="red">
+                  Faltan datos
+                </Text>
+              )}
+            </FormLabel>
+            <Input
+              placeholder="DNI/Pasaporte"
+              name="dni"
+              value={userData.dni}
+              onChange={handleChange}
+            />
+          </FormControl>
+
+          <FormControl>
+            <FormLabel>
+              Número de Teléfono actual:{" "}
+              {!userData.phone && (
+                <Text display="inline" color="red">
+                  Faltan datos
+                </Text>
+              )}
+            </FormLabel>
+            <Input
+              placeholder="Teléfono"
+              name="phone"
+              value={userData.phone}
+              onChange={handleChange}
+            />
+          </FormControl>
+
+          <FormControl display="flex" alignItems="center">
+            <Checkbox
+              name="contractSigned"
+              isChecked={userData.contractSigned}
+              onChange={handleChange}
+              mr={2}
+            />
+            <Link href="/contrato.pdf" mb="0">Contrato Terapéutico Firmado</Link>
+          </FormControl>
+
+          <FormControl>
+            <FormLabel>
+              Contacto de Cómplice de Recuperación actual:{" "}
+              {userData.recoveryContact}
+            </FormLabel>
+            <Input
+              placeholder="Contacto de recuperación"
+              name="recoveryContact"
+              value={userData.recoveryContact}
+              onChange={handleChange}
+            />
+          </FormControl>
+
+          {!isGoogleUser && (
+            <FormControl>
+              <FormLabel>Contraseña Actual</FormLabel>
               <Input
-                type="text"
-                placeholder="Tu nombre"
-                value={userData?.name}
-                onChange={(e) => setName(e.target.value)}
+                type="password"
+                placeholder="Contraseña actual"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
               />
             </FormControl>
+          )}
 
-            <FormControl mt={4}>
-              <FormLabel>Teléfono</FormLabel>
-              <Input
-                type="tel"
-                placeholder="Tu teléfono"
-                value={userData?.phone}
-                onChange={(e) => setPhone(e.target.value)}
-              />
-            </FormControl>
+          <MyButton colorScheme="blue" isLoading={loading} onClick={handleSave}>
+            Guardar Cambios
+          </MyButton>
 
-            <Button type="submit" colorScheme="blue" mt={4}>
-              Guardar cambios
-            </Button>
-          </form>
+          <MyButton colorScheme="orange" onClick={onOpen}>
+            Cambiar Contraseña
+          </MyButton>
         </VStack>
-      </Box>
-    </Container>
+
+        {/* Modal para cambiar contraseña */}
+        <Modal isOpen={isOpen} onClose={onClose}>
+          <ModalOverlay />
+          <ModalContent>
+            <ModalHeader>Cambiar Contraseña</ModalHeader>
+            <ModalBody>
+              <FormControl isRequired>
+                <FormLabel>Nueva Contraseña</FormLabel>
+                <Input
+                  type="password"
+                  placeholder="Nueva contraseña"
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                />
+              </FormControl>
+              <FormControl isRequired mt={4}>
+                <FormLabel>Confirmar Contraseña</FormLabel>
+                <Input
+                  type="password"
+                  placeholder="Confirmar contraseña"
+                  value={confirmNewPassword}
+                  onChange={(e) => setConfirmNewPassword(e.target.value)}
+                />
+              </FormControl>
+            </ModalBody>
+            <ModalFooter>
+              <MyButton colorScheme="green" onClick={handleChangePassword}>
+                Guardar
+              </MyButton>
+              <MyButton ml={3} onClick={onClose}>
+                Cancelar
+              </MyButton>
+            </ModalFooter>
+          </ModalContent>
+        </Modal>
+      </Container>
+    </>
   );
 }
