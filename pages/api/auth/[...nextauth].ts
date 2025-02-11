@@ -69,11 +69,7 @@ export const authOptions: AuthOptions = {
       return true;
     },
 
-    async jwt({ token, user, trigger }) {
-      if (trigger === "signIn") {
-        token.sub = user.id;
-        token.role = user.role;
-      }
+    async jwt({ token, user }) {
       if (user) {
         token.sub = user.id;
         token.role = user.role;
