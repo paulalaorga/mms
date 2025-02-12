@@ -30,8 +30,8 @@ const UserLayout = ({ children }: { children: ReactNode }) => {
           <Link as={NextLink} href="/user/profile" _hover={{ textDecoration: "underline" }}>
             Perfil
           </Link>
-          <Link as={NextLink} href="/user/content1" _hover={{ textDecoration: "underline" }}>
-            Mi Contenido 1
+          <Link as={NextLink} href="/user/sessions" _hover={{ textDecoration: "underline" }}>
+            Mis Sesiones
           </Link>
           <Link as={NextLink} href="/user/programs" _hover={{ textDecoration: "underline" }}>
             Programas

@@ -1,8 +1,10 @@
 import User from "@/models/User";
 import connectDB from "@/lib/mongodb";
-import { Request, Response } from "express";
+import type { NextApiRequest, NextApiResponse } from "next";
 
-export default async function handler(req: Request, res: Response) {
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+
+
   if (req.method === "GET") {
     await connectDB();
     const { token } = req.query;

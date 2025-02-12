@@ -1,109 +1,105 @@
 import NextAuth, { AuthOptions } from "next-auth";
+import { NextApiHandler } from "next";
 import CredentialsProvider from "next-auth/providers/credentials";
 import GoogleProvider from "next-auth/providers/google";
-import User from "@/models/User";
 import connectDB from "@/lib/mongodb";
+import User from "@/models/User";
 
+// Forzar ejecución en Serverless Functions
+export const config = {
+  runtime: "nodejs", // Evita que NextAuth se ejecute en Edge Runtime
+};
+
+// 🔹 Definir y exportar `authOptions`
 export const authOptions: AuthOptions = {
   providers: [
-    // Login con Google
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID!,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
     }),
-
-    // Login con usuario y contraseña (MongoDB)
     CredentialsProvider({
       name: "Credentials",
       credentials: {
         email: { label: "Email", type: "email", placeholder: "tu@correo.com" },
         password: { label: "Password", type: "password" },
       },
-
-      async authorize (credentials) {
+      async authorize(credentials) {
         await connectDB();
         const user = await User.findOne({ email: credentials?.email });
 
-          if (!credentials?.email || !credentials?.password) {
-            throw new Error("Falta el correo o la contraseña");
-          }
+        if (!credentials?.email || !credentials?.password) {
+          throw new Error("Falta el correo o la contraseña");
+        }
 
-          if (!user) {
-            throw new Error("Usuario no encontrado");
-          }
+        if (!user) {
+          throw new Error("Usuario no encontrado");
+        }
 
-          if (!user.isConfirmed) {
-            throw new Error("Confirma tu correo para iniciar sesión");
-          }
+        if (!user.isConfirmed) {
+          throw new Error("Confirma tu correo para iniciar sesión");
+        }
 
-          if (user.password !== credentials?.password) {
-            throw new Error("Contraseña incorrecta");
-          }
+        if (user.password !== credentials?.password) {
+          throw new Error("Contraseña incorrecta");
+        }
 
-          return { 
-            id: user._id.toString(),
-            email: user.email, 
-            role: user.role,
-          };
+        return {
+          id: user._id.toString(),
+          email: user.email,
+          role: user.role,
+        };
       },
     }),
   ],
   secret: process.env.NEXTAUTH_SECRET,
-  session: {
-    strategy: "jwt",
-  },
+  session: { strategy: "jwt", maxAge: 24 * 60 * 60 },
   callbacks: {
     async signIn({ user }) {
-      // Conectar a Mongo
-      // Buscar si ya existe un usuario con user.email
+      await connectDB();
       let dbUser = await User.findOne({ email: user.email });
       if (!dbUser) {
-        dbUser = await User.create({
-          name: user.name,
-          email: user.email,
-          role: user.role,
-          
-        });
+        dbUser = await User.create({ email: user.email, role: "user" });
       }
-      // => dbUser._id es un ObjectId
-      return true; 
+      return true;
     },
 
     async jwt({ token, user }) {
       if (user) {
-        token.sub = user.id;
+        token.id = user.id;
         token.role = user.role;
+        token.surname = user.surname;
+        token.isPatient = user.isPatient;
+        token.groupProgramPaid = user.groupProgramPaid;
+        token.individualProgram = user.individualProgram;
+        token.nextSessionDate = user.nextSessionDate ? user.nextSessionDate.toISOString() : null;
       }
       return token;
     },
-
+  
     async session({ session, token }) {
-      session.user.id = token?.sub ?? "";
-      session.user.role = token?.role as string ?? "";
+      session.user = {
+        ...session.user,
+        id: token.sub ?? "",
+        role: (token.role as string) ?? "",
+        surname: (token.surname as string) ?? "",
+        isPatient: (token.isPatient as boolean) ?? false,
+        groupProgramPaid: (token.groupProgramPaid as boolean) ?? false,
+        individualProgram: (token.individualProgram as boolean) ?? false,
+        nextSessionDate:
+        token.nextSessionDate && typeof token.nextSessionDate === "string"
+        ? new Date(token.nextSessionDate)
+        : null,
+      };
       return session;
     },
-
     async redirect({ baseUrl }) {
-      // Obtener la sesión actual
-      const session = await fetch(`${baseUrl}/api/auth/session`).then((res) =>
-        res.json()
-      );
-
-      console.log("Redirigiendo usuario con rol:", session?.user?.role);
-
-      // Redirigir según el rol del usuario
-      if (session?.user?.role === "admin") {
-        return `${baseUrl}/admin`;
-      } else {
-        return `${baseUrl}/user`;
-      }
+      return `${baseUrl}/dashboard`;
     },
   },
-  pages: {
-    signIn: "/login",
-    error: "/error",
-    signOut: "/index",
-  },
+  pages: { signIn: "/login", error: "/error", signOut: "/index" },
 };
 
-export default NextAuth(authOptions);
+// 🔹 Ahora usamos `authOptions` en NextAuth
+const authHandler: NextApiHandler = (req, res) => NextAuth(req, res, authOptions);
+
+export default authHandler;

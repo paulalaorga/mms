@@ -3,7 +3,7 @@
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
-import { Heading, Text, Spinner } from "@chakra-ui/react";
+import { Heading, Text, Spinner, Container, VStack } from "@chakra-ui/react";
 import AdminLayout from "./layout";
 
 export default function AdminPage() {
@@ -12,20 +12,29 @@ export default function AdminPage() {
 
   useEffect(() => {
     if (status === "loading") return;
-    if (!session || session.user.role !== "admin") {
-      router.push("/profile");
+    if (!session) {
+      router.push("/login");
+    } else if (session.user?.role !== "admin") {
+      router.push("/user"); // Redirige a usuarios normales
     }
   }, [session, status, router]);
+
+  console.log("Sesión:", session);
 
   if (status === "loading") {
     return <Spinner />;
   }
 
   return (
-    <>
-      <Heading>Dashboard de Administrador</Heading>
-      <Text>Selecciona una opción en el menú lateral.</Text>
-    </>
+    <Container centerContent py={10}>
+        <VStack spacing={6} align="center">
+        <Heading size="lg">Bienvenido, {session?.user?.name || "Administrador"} 🎉</Heading>
+        <Text fontSize="lg">Este es tu panel de usuario</Text>
+
+        <Heading size="md" mt={6}>Tus próximas sesiones</Heading>
+        <Text fontSize="lg">Aquí podrás ver las sesiones que tienes programadas</Text>
+        </VStack>
+    </Container>
   );
 }
 

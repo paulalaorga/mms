@@ -1,8 +1,7 @@
-import type { NextConfig } from "next";
-
-const nextConfig: NextConfig = {
-  reactStrictMode: true, // Activa el modo estricto de React
-  
+/** @type {import('next').NextConfig} */
+const nextConfig = {
+  output: "standalone",
+  outputFileTracingRoot: __dirname, // Movido fuera de `experimental`
 };
 
 export default nextConfig;
