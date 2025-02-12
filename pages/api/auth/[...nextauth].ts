@@ -1,25 +1,28 @@
 import NextAuth, { AuthOptions } from "next-auth";
+import { NextApiHandler } from "next";
 import CredentialsProvider from "next-auth/providers/credentials";
 import GoogleProvider from "next-auth/providers/google";
-import User from "@/models/User";
 import connectDB from "@/lib/mongodb";
+import User from "@/models/User";
 
+// Forzar ejecución en Serverless Functions
+export const config = {
+  runtime: "nodejs", // Evita que NextAuth se ejecute en Edge Runtime
+};
+
+// 🔹 Definir y exportar `authOptions`
 export const authOptions: AuthOptions = {
   providers: [
-    // Login con Google
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID!,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
     }),
-
-    // Login con usuario y contraseña (MongoDB)
     CredentialsProvider({
       name: "Credentials",
       credentials: {
         email: { label: "Email", type: "email", placeholder: "tu@correo.com" },
         password: { label: "Password", type: "password" },
       },
-
       async authorize(credentials) {
         await connectDB();
         const user = await User.findOne({ email: credentials?.email });
@@ -50,71 +53,54 @@ export const authOptions: AuthOptions = {
     }),
   ],
   secret: process.env.NEXTAUTH_SECRET,
-  session: {
-    strategy: "jwt",
-    maxAge: 24 * 60 * 60, // 1 día
-  },
+  session: { strategy: "jwt", maxAge: 24 * 60 * 60 },
   callbacks: {
     async signIn({ user }) {
-      // Conectar a Mongo
-      // Buscar si ya existe un usuario con user.email
+      await connectDB();
       let dbUser = await User.findOne({ email: user.email });
       if (!dbUser) {
-        dbUser = await User.create({
-          name: user.name,
-          email: user.email,
-          role: user.role,
-        });
+        dbUser = await User.create({ email: user.email, role: "user" });
       }
-      // => dbUser._id es un ObjectId
       return true;
     },
 
-    async jwt({ token, user, trigger }) {
-      if (trigger === "signIn") {
-        token.sub = user.id;
-        token.role = user.role;
-      }
+    async jwt({ token, user }) {
       if (user) {
-        token.sub = user.id;
+        token.id = user.id;
         token.role = user.role;
+        token.surname = user.surname;
+        token.isPatient = user.isPatient;
+        token.groupProgramPaid = user.groupProgramPaid;
+        token.individualProgram = user.individualProgram;
+        token.nextSessionDate = user.nextSessionDate ? user.nextSessionDate.toISOString() : null;
       }
       return token;
     },
-
+  
     async session({ session, token }) {
-      session.user.id = token?.sub ?? "";
-      session.user.role = (token?.role as string) ?? "";
+      session.user = {
+        ...session.user,
+        id: token.sub ?? "",
+        role: (token.role as string) ?? "",
+        surname: (token.surname as string) ?? "",
+        isPatient: (token.isPatient as boolean) ?? false,
+        groupProgramPaid: (token.groupProgramPaid as boolean) ?? false,
+        individualProgram: (token.individualProgram as boolean) ?? false,
+        nextSessionDate:
+        token.nextSessionDate && typeof token.nextSessionDate === "string"
+        ? new Date(token.nextSessionDate)
+        : null,
+      };
       return session;
     },
-
     async redirect({ baseUrl }) {
-      try {
-        const session = await fetch(`${baseUrl}/api/auth/session`).then((res) =>
-          res.json()
-        );
-
-        if (!session || !session.user) {
-          return `${baseUrl}/login`;
-        }
-
-        // Redirigir según el rol del usuario
-        if (session.user?.role === "admin") {
-          return `${baseUrl}/admin`;
-        } else {
-          return `${baseUrl}/user`;
-        }
-      } catch (error) {
-        console.error("❌ Error en la API:", error);
-        return `${baseUrl}/error`;
-      }
+      return `${baseUrl}/dashboard`;
     },
   },
-  pages: {
-    signIn: "/login",
-    error: "/error",
-    signOut: "/index",
-  },
+  pages: { signIn: "/login", error: "/error", signOut: "/index" },
 };
 
-export default NextAuth(authOptions);
+// 🔹 Ahora usamos `authOptions` en NextAuth
+const authHandler: NextApiHandler = (req, res) => NextAuth(req, res, authOptions);
+
+export default authHandler;

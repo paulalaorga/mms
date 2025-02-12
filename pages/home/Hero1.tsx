@@ -11,6 +11,7 @@ import {
   ModalBody,
   useDisclosure,
   Text,
+  Flex,
 } from "@chakra-ui/react";
 import { useState, useEffect } from "react";
 import NextLink from "next/link";
@@ -47,7 +48,7 @@ export default function Hero1() {
   }, [i18n]);
 
   return (
-    <Box position="relative" minH="100vh" display="flex" flexDirection="column">
+    <Box position="relative" height={["78vh", "80vh"]} width="100vw" display="flex" flexDirection="column">
       {/* Contenedor para la imagen de fondo */}
       <Box position="absolute" top={0} left={0} width="100%" height="100%" zIndex={-1}>
         <Image src={mountains} alt="MMS" fill style={{ objectFit: "cover" }} />
@@ -57,12 +58,11 @@ export default function Hero1() {
       </Box>
 
       <Container
-        maxW="container.lg"
-        minH="100vh"
+        minH="80vh"
         display="flex"
         flexDirection="column"
         alignItems="center"
-        justifyContent="flex-start"
+        justifyContent="space-evenly"
         textAlign="center"
         position="relative"
         zIndex={1}
@@ -94,7 +94,7 @@ export default function Hero1() {
           <ModalOverlay />
           <ModalContent bg="black">
             <CloseButton color="white" onClick={onClose} />
-            <ModalBody p={4} display="flex" justifyContent="center">
+            <ModalBody display="flex" justifyContent="center">
               <video width="100%" controls>
                 <source src="/Presentacion_1.mp4" type="video/mp4" />
                 {isClient ? ("video_error") : "Cargando..."}

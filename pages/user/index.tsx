@@ -1,122 +1,119 @@
 "use client";
 
 import { useSession } from "next-auth/react";
-import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Container,
   Heading,
   Text,
   VStack,
-  SimpleGrid,
-  Card,
-  CardBody,
   Spinner,
   Alert,
   AlertIcon,
+  Box,
 } from "@chakra-ui/react";
+import { IUser }  from "@/models/User";
 import UserLayout from "./layout";
-
-interface Product {
-  id: string;
-  name: string;
-  price: number;
-  status: string;
-}
+import ProfileProgress from "./profile/ProfileProgress";
 
 export default function UserDashboard() {
   const { data: session, status } = useSession();
-  const router = useRouter();
-  const [products, setProducts] = useState<Product[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [userData, setUserData] = useState<IUser | null>(null);
   const [showProfileProgress, setShowProfileProgress] = useState(true);
   const [isPatient, setIsPatient] = useState(false);
 
   useEffect(() => {
     if (!session?.user?.email) return;
-  
+
     const fetchUserData = async () => {
       try {
         const res = await fetch("/api/user/profile");
         if (!res.ok) throw new Error("Error al cargar los datos del perfil.");
-  
-        const data = await res.json();
+
+        const data: IUser = await res.json();
         console.log("✅ Datos del usuario recibidos:", data);
-  
-        const userData = data.userData || data;
-  
-        setIsPatient(userData.isPatient ?? false);
-        setShowProfileProgress(
-          !userData.name ||
-          !userData.surname ||
-          !userData.email ||
-          !userData.dni ||
-          !userData.phone ||
-          !userData.contractSigned ||
-          !userData.recoveryContact
-        );
-  
+        setUserData(data);
       } catch (error) {
         console.error("Error al cargar los datos del perfil:", error);
+        setError("Error al cargar los datos del perfil.");
       }
     };
-  
+
     fetchUserData();
   }, [session]);
-  
 
   if (status === "loading") {
-    return <Spinner size="xl" />;
+    return (
+      <Container centerContent>
+        <Spinner size="xl" />
+      </Container>
+    );
+  }
+
+  if (!session?.user) {
+    return (
+      <Container centerContent py={10}>
+        <Alert status="error">
+          <AlertIcon />
+          No se pudo cargar la sesión de usuario.
+        </Alert>
+      </Container>
+    );
   }
 
   return (
     <Container centerContent py={10}>
       <VStack spacing={6} align="center">
-        {error && (
-          <Alert status="error">
-            <AlertIcon />
-            {error}
-          </Alert>
-        )}
         <Heading size="lg">
-          Bienvenido, {session?.user?.name || "Usuario"}{" "}
-          {session?.user?.surname || ""} 🎉
+          Bienvenido, {session.user.name || "Usuario"}{" "}
+          {userData?.surname || ""} 🎉
         </Heading>
         <Text fontSize="lg">Este es tu panel de usuario</Text>
+
         {/* Mostrar barra de progreso solo si faltan datos */}
-        {showProfileProgress && (
-          <Box w="100%" alignContent="center" textAlign="center">
-            <ProfileProgress />
-          </Box>
-        )}
-        {!isPatient && (
+        <Box w="100%" alignContent="center" textAlign="center">
+          <ProfileProgress />
+        </Box>
+
+        {/* Si el usuario NO es paciente, mostrar programas disponibles */}
+        {!userData?.isPatient && (
           <Alert status="info" mt={4}>
             <AlertIcon />
             No estás registrado en ningún programa. Consulta los programas
             disponibles en nuestra tienda.
           </Alert>
         )}
-        {isPatient && session?.user?.groupProgramPaid && (
+
+        {/* Mostrar alerta si el usuario tiene acceso a sesiones grupales */}
+        {userData?.isPatient && userData?.groupProgramPaid && (
           <Alert status="success" mt={4}>
             <AlertIcon />
             Tienes acceso a sesiones grupales. Revisa tu calendario para unirte.
           </Alert>
         )}
-        {isPatient &&
-          session?.user?.individualProgram &&
-          session?.user?.nextSessionDate && (
-            <Alert status="info" mt={4}>
-              <AlertIcon />
-              Tu próxima sesión individual es el{" "}
-              {new Date(session.user.nextSessionDate).toLocaleDateString()}.
-            </Alert>
-          )}
+
+        {/* Mostrar alerta de próxima sesión individual */}
+        {userData?.individualProgram && userData?.nextSessionDate && (
+          <Alert status="info" mt={4}>
+            <AlertIcon />
+            Tu próxima sesión individual es el{" "}
+            {new Date(userData.nextSessionDate).toLocaleDateString()}.
+          </Alert>
+        )}
+
+        {error && (
+          <Alert status="error" mt={4}>
+            <AlertIcon />
+            {error}
+          </Alert>
+        )}
       </VStack>
     </Container>
   );
 }
 
+// Layout para la página de usuario
 UserDashboard.getLayout = function getLayout(page: React.ReactNode) {
   return <UserLayout>{page}</UserLayout>;
 };

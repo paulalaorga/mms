@@ -5,10 +5,10 @@ import { SessionProvider } from "next-auth/react";
 import { useRouter } from "next/router";
 import { useEffect } from "react";
 import { appWithTranslation, useTranslation } from "next-i18next";
-import AdminLayout from "../pages/admin/layout";
-import UserLayout from "../pages/user/layout";
-import theme from "../src/theme";
-import "../src/config/i18n"; // Asegura que i18next se inicializa
+import { Analytics } from "@vercel/analytics/react"; // Import de Vercel Analytics
+import AdminLayout from "../pages/admin/layout"; // Layout de Admin
+import UserLayout from "../pages/user/layout"; // Layout de Usuario
+import theme from "../src/theme"; // Importa el tema corregido
 
 function MyApp({ Component, pageProps }: AppProps) {
   const router = useRouter();
@@ -39,6 +39,8 @@ function MyApp({ Component, pageProps }: AppProps) {
         ) : (
           <Component {...pageProps} />
         )}
+        {/* Agregamos Analytics de Vercel */}
+        <Analytics />
       </ChakraProvider>
     </SessionProvider>
   );

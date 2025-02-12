@@ -7,6 +7,8 @@ const nextConfig: NextConfig = {
     defaultLocale: "es",
     localeDetection: false, // Next.js espera false como literal
   },
+  output: "standalone", // Permite despliegue optimizado
+  outputFileTracingRoot: __dirname, // Optimización de archivos en output
 };
 
 export default nextConfig;
