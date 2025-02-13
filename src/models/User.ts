@@ -1,6 +1,7 @@
 import mongoose, { Schema } from "mongoose";
 
 export interface IUser {
+  _id: string;
   name: string;
   surname?: string;
   dni?: string;
@@ -23,6 +24,7 @@ export interface IUser {
 }
 
 const UserSchema = new Schema<IUser>({
+  _id:{ type: String, required: true, unique: true },
   name: { type: String, required: true },
   surname: { type: String }, // ✅ Apellidos
   dni: { type: String }, // ✅ DNI/Pasaporte
