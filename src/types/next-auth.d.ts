@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 import { DefaultSession } from "next-auth";
+=======
+import  DefaultUser from "next-auth";
+>>>>>>> ae8c881b015f731fa0157f804124f7e1de6389d1
 
 declare module "next-auth" {
   interface User extends DefaultUser {
@@ -19,19 +23,24 @@ declare module "next-auth" {
     } 
 
   interface Session {
-    user: {
-      name: string;
-      email: string;
-      role: string;
-      recoveryContact: string;
+    user: DefaultUser & {
+      id: string;
       surname?: string;
-      dni?: string;
-      phone?: string;
-      contractSigned?: boolean;
       isPatient?: boolean;
       groupProgramPaid?: boolean;
       individualProgram?: boolean;
-      nextSessionDate?: string | null;
+      nextSessionDate?: Date | null;
+      role: string;
     };
+  }
+
+  interface User extends DefaultUser {
+    id: string;
+    surname?: string;
+    isPatient?: boolean;
+    groupProgramPaid?: boolean;
+    individualProgram?: boolean;
+    nextSessionDate?: Date | null;
+    role: string;
   }
 }
