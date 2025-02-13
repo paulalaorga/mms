@@ -65,35 +65,48 @@ export const authOptions: AuthOptions = {
 
     async jwt({ token, user }) {
       if (user) {
-        token.id = user.id;
-        token.role = user.role;
-        token.surname = user.surname;
-        token.isPatient = user.isPatient;
-        token.groupProgramPaid = user.groupProgramPaid;
-        token.individualProgram = user.individualProgram;
-        token.nextSessionDate = user.nextSessionDate ? user.nextSessionDate.toISOString() : null;
+        return {
+          ...token,
+          id: user.id || token.id,
+          role: user.role || token.role,
+          surname: user.surname || token.surname,
+          isPatient: user.isPatient || token.isPatient,
+          groupProgramPaid: user.groupProgramPaid || token.groupProgramPaid,
+          individualProgram: user.individualProgram || token.individualProgram,
+          nextSessionDate: user.nextSessionDate
+            ? new Date(user.nextSessionDate).toISOString()
+            : token.nextSessionDate,
+        };
       }
       return token;
     },
   
     async session({ session, token }) {
-      session.user = {
-        ...session.user,
-        id: token.sub ?? "",
-        role: (token.role as string) ?? "",
-        surname: (token.surname as string) ?? "",
-        isPatient: (token.isPatient as boolean) ?? false,
-        groupProgramPaid: (token.groupProgramPaid as boolean) ?? false,
-        individualProgram: (token.individualProgram as boolean) ?? false,
-        nextSessionDate:
-        token.nextSessionDate && typeof token.nextSessionDate === "string"
-        ? new Date(token.nextSessionDate)
-        : null,
-      };
+      if (!session.user.id || session.user.id !== token.id) {
+        session.user = {
+          id: token.id ?? session.user.id,
+          role: token.role ?? session.user.role,
+          surname: token.surname ?? session.user.surname,
+          isPatient: token.isPatient ?? session.user.isPatient,
+          groupProgramPaid: token.groupProgramPaid ?? session.user.groupProgramPaid,
+          individualProgram: token.individualProgram ?? session.user.individualProgram,
+          nextSessionDate:
+            token.nextSessionDate && typeof token.nextSessionDate === "string"
+              ? new Date(token.nextSessionDate)
+              : session.user.nextSessionDate ?? null,
+        };
+      }
       return session;
     },
-    async redirect({ baseUrl }) {
-      return `${baseUrl}/dashboard`;
+    async redirect({ url, baseUrl }) {
+      // Si el usuario intenta ir a un lugar específico, lo mantenemos
+      if (url.startsWith(baseUrl)) return url;
+      
+      // Si está cerrando sesión, lo mandamos a la página principal
+      if (url.includes("/api/auth/signout")) return `${baseUrl}/`;
+    
+      // Si está iniciando sesión, lo enviamos a una ruta válida (puede ser `/profile` o `/user`)
+      return `${baseUrl}/user`;
     },
   },
   pages: { signIn: "/login", error: "/error", signOut: "/index" },
