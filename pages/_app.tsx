@@ -9,6 +9,7 @@ import { Analytics } from "@vercel/analytics/react"; // Import de Vercel Analyti
 import AdminLayout from "../pages/admin/layout"; // Layout de Admin
 import UserLayout from "../pages/user/layout"; // Layout de Usuario
 import theme from "../src/theme"; // Importa el tema corregido
+import nextI18nextConfig from "../next-i18next.config.cjs";
 
 function MyApp({ Component, pageProps }: AppProps) {
   const router = useRouter();
@@ -17,11 +18,10 @@ function MyApp({ Component, pageProps }: AppProps) {
   const { i18n } = useTranslation();
 
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      const userLang = navigator.language.startsWith("en") ? "en" : "es";
-      if (i18n.language !== userLang) {
-        i18n.changeLanguage(userLang);
-      }
+    const storedLang = localStorage.getItem("i18nextLng") || i18n.language;
+    
+    if (i18n.language !== storedLang) {
+      i18n.changeLanguage(storedLang);
     }
   }, [i18n]);
 
@@ -46,4 +46,4 @@ function MyApp({ Component, pageProps }: AppProps) {
   );
 }
 
-export default appWithTranslation(MyApp);
+export default appWithTranslation(MyApp, nextI18nextConfig);

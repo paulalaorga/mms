@@ -11,10 +11,9 @@ import {
   ModalBody,
   useDisclosure,
   Text,
-  Flex,
+  Flex
 } from "@chakra-ui/react";
 import { useState, useEffect } from "react";
-import NextLink from "next/link";
 import { Link as ChakraLink } from "@chakra-ui/react";
 import { useTranslation } from "next-i18next";
 import { serverSideTranslations } from "next-i18next/serverSideTranslations";
@@ -38,15 +37,25 @@ export default function Hero1() {
   const { isOpen, onOpen, onClose } = useDisclosure();
   const [isClient, setIsClient] = useState(false);
 
-  
+  console.log("🌍 Idioma detectado por i18next:", i18n.language);
+  console.log("🔍 Prueba de traducción:", t("heading"));
 
+  
+  const scrollToSection = () => {
+    window.scrollTo({ top: window.innerHeight, behavior: "smooth" });
+  };
+  
   useEffect(() => {
     setIsClient(true);
-    if (i18n.language !== "en") {
-      i18n.changeLanguage("en");
+    
+    // Detecta el idioma en localStorage o usa el que Next.js pasó por SSR
+    const storedLang = localStorage.getItem("i18nextLng") || i18n.language;
+  
+    if (storedLang !== "en") {
+      i18n.changeLanguage(storedLang);
     }
   }, [i18n]);
-
+  
   return (
     <Box position="relative" height={["78vh", "80vh"]} width="100vw" display="flex" flexDirection="column">
       {/* Contenedor para la imagen de fondo */}
@@ -62,18 +71,54 @@ export default function Hero1() {
         display="flex"
         flexDirection="column"
         alignItems="center"
-        justifyContent="space-evenly"
+        justifyContent="center"
         textAlign="center"
         position="relative"
         zIndex={1}
-        px={4}
-        pt={20}
+        maxW="90vw"
       >
-        <Heading size={{ base: "lg", md: "xl" }} textTransform="uppercase" mt={50} fontWeight="bold" color={"white"}>
+        <Flex
+          direction="column"
+          align="center"
+          textAlign="center"
+          width="-webkit-fill-available"
+        >
+           <Box  minW="90%">
+        <Heading 
+        fontSize={["34px", "46px", "68px"]}
+        textTransform="uppercase"
+        color="white"
+        textAlign="center"
+        letterSpacing={["0.5px", "1px", "2px"]}
+        whiteSpace="normal" // Permite que el texto se adapte
+      >
           {isClient ? t("heading") : "Cargando..."}
-          <Text color="accent.50">{isClient ? t("online") : "Cargando..."}</Text>
+          </Heading>
+          <Heading
+              fontSize={["42px", "48px", "84px"]}
+              color="accent.50"
+              fontWeight="bolder"
+              textTransform="uppercase"
+              textAlign="center"
+              letterSpacing={["3px", "3px", "6px", "46px"]}
+              maxWidth="100%"
+              display="block"
+              mt={2}
+            >100% online
+            </Heading>
+            </Box>
+            
+          <Heading
+          fontSize={["24px", "32px", "40px"]}
+          textTransform="uppercase"
+          fontWeight="bold"
+          color="white"
+          textAlign="center"
+          mt={3}
+        >
           {isClient ? t("subheading") : "Cargando..."}
         </Heading>
+    
 
         <HStack
           alignItems="center"
@@ -81,14 +126,33 @@ export default function Hero1() {
           textAlign="center"
           onClick={onOpen}
           spacing={4}
-          mt={8}
           color="accent.50"
           cursor="pointer"
           _hover={{ color: "accent.100" }}
         >
           <Icon as={FaRegPlayCircle} boxSize={8} />
-          <Heading size="md">{isClient ? t("team") : "Cargando..."}</Heading>
+          <Text fontSize={["18px", "24px"]} fontWeight="bolder">{isClient ? t("team") : "Cargando..."}</Text>
         </HStack>
+
+        <Box
+        position="absolute"
+        bottom={4}
+        left="50%"
+        transform="translateX(-50%)"
+        alignItems="center"
+        justifyContent="center"
+        zIndex={2}
+      >
+          <ChakraLink  onClick={scrollToSection} color="brand.50" _hover={{ color: "accent.50" }}>
+            <HStack display="flex" flexDirection="column">
+              <Heading fontSize={["14px", "16px"]}>{isClient ? t("how_it_works") : "Cargando..."}</Heading>
+              <Icon as={MdKeyboardDoubleArrowDown} color="brand.100" boxSize={[6, 8]} // Reduce tamaño en móvil
+              mt={-2} />
+            </HStack>
+          </ChakraLink>
+      </Box>
+      </Flex>
+      
 
         <Modal isOpen={isOpen} onClose={onClose} size="xl" isCentered>
           <ModalOverlay />
@@ -103,25 +167,7 @@ export default function Hero1() {
           </ModalContent>
         </Modal>
       </Container>
-
-      <Box
-        position="fixed"
-        bottom={150}
-        left="50%"
-        transform="translateX(-50%)"
-        alignItems="center"
-        justifyContent="center"
-        zIndex={1000}
-      >
-        <NextLink href="/hero2" passHref legacyBehavior>
-          <ChakraLink color="brand.50" _hover={{ color: "accent.50" }}>
-            <HStack display="flex" flexDirection="column">
-              <Heading size="sm" m={-3}>{isClient ? t("how_it_works") : "Cargando..."}</Heading>
-              <Icon as={MdKeyboardDoubleArrowDown} color="brand.100" boxSize={10} />
-            </HStack>
-          </ChakraLink>
-        </NextLink>
       </Box>
-    </Box>
+      
   );
 }

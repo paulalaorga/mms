@@ -5,5 +5,6 @@ module.exports = {
     defaultLocale: "es",
     localeDetection: true
   },
-  localePath: "public/locales", // Asegura que se usen los archivos en public/locales
+  localePath: "./public/locales",
+  reactStrictMode: true,
 };
