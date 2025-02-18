@@ -13,48 +13,23 @@ import {
   Text,
   Flex
 } from "@chakra-ui/react";
-import { useState, useEffect } from "react";
 import { Link as ChakraLink } from "@chakra-ui/react";
-import { useTranslation } from "next-i18next";
-import { serverSideTranslations } from "next-i18next/serverSideTranslations";
-import { GetStaticProps } from "next";
 
 import { MdKeyboardDoubleArrowDown } from "react-icons/md";
 import { FaRegPlayCircle } from "react-icons/fa";
 import Image from "next/image";
 import mountains from "../../public/mountains-mms.jpg";
 
-export const getStaticProps: GetStaticProps = async ({ locale }) => {
-  return {
-    props: {
-      ...(await serverSideTranslations(locale ?? "es", ["hero1"])), // Carga las traducciones
-    },
-  };
-};
 
 export default function Hero1() {
-  const { t, i18n} = useTranslation("hero1"); // Carga las traducciones desde hero1.json
   const { isOpen, onOpen, onClose } = useDisclosure();
-  const [isClient, setIsClient] = useState(false);
 
-  console.log("🌍 Idioma detectado por i18next:", i18n.language);
-  console.log("🔍 Prueba de traducción:", t("heading"));
 
   
   const scrollToSection = () => {
     window.scrollTo({ top: window.innerHeight, behavior: "smooth" });
   };
   
-  useEffect(() => {
-    setIsClient(true);
-    
-    // Detecta el idioma en localStorage o usa el que Next.js pasó por SSR
-    const storedLang = localStorage.getItem("i18nextLng") || i18n.language;
-  
-    if (storedLang !== "en") {
-      i18n.changeLanguage(storedLang);
-    }
-  }, [i18n]);
   
   return (
     <Box position="relative" height={["78vh", "80vh"]} width="100vw" display="flex" flexDirection="column">
@@ -92,7 +67,7 @@ export default function Hero1() {
         letterSpacing={["0.5px", "1px", "2px"]}
         whiteSpace="normal" // Permite que el texto se adapte
       >
-          {isClient ? t("heading") : "Cargando..."}
+          Somos el primer programa de recuperación
           </Heading>
           <Heading
               fontSize={["42px", "48px", "84px"]}
@@ -116,7 +91,7 @@ export default function Hero1() {
           textAlign="center"
           mt={3}
         >
-          {isClient ? t("subheading") : "Cargando..."}
+          pero es que además somos muy buenos
         </Heading>
     
 
@@ -131,7 +106,7 @@ export default function Hero1() {
           _hover={{ color: "accent.100" }}
         >
           <Icon as={FaRegPlayCircle} boxSize={8} />
-          <Text fontSize={["18px", "24px"]} fontWeight="bolder">{isClient ? t("team") : "Cargando..."}</Text>
+          <Text fontSize={["18px", "24px"]} fontWeight="bolder">Conoce al equipo de MMS</Text>
         </HStack>
 
         <Box
@@ -145,7 +120,7 @@ export default function Hero1() {
       >
           <ChakraLink  onClick={scrollToSection} color="brand.50" _hover={{ color: "accent.50" }}>
             <HStack display="flex" flexDirection="column">
-              <Heading fontSize={["14px", "16px"]}>{isClient ? t("how_it_works") : "Cargando..."}</Heading>
+              <Heading fontSize={["14px", "16px"]}>¿Cómo funciona MMS?</Heading>
               <Icon as={MdKeyboardDoubleArrowDown} color="brand.100" boxSize={[6, 8]} // Reduce tamaño en móvil
               mt={-2} />
             </HStack>
@@ -161,7 +136,7 @@ export default function Hero1() {
             <ModalBody display="flex" justifyContent="center">
               <video width="100%" controls>
                 <source src="/Presentacion_1.mp4" type="video/mp4" />
-                {isClient ? ("video_error") : "Cargando..."}
+                Tu navegador no soporta el elemento de video
               </video>
             </ModalBody>
           </ModalContent>

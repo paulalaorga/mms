@@ -2,11 +2,9 @@ import { Box, Heading, Container } from "@chakra-ui/react";
 import { LuUsers } from "react-icons/lu";
 import { BsCalendarCheck } from "react-icons/bs";
 import { MdOutlineVerifiedUser } from "react-icons/md";
-import { useTranslation } from "next-i18next";
 import Hero2Card from "@/components/home/Hero2Card";
 
 export default function Hero2() {
-  const { t } = useTranslation("hero2"); 
   return (
     <div id="hero2">
       <Box
@@ -31,7 +29,7 @@ export default function Hero2() {
           minH={"20vh"}
         
         >
-          {t("heading")}
+          NADA DE COMPLICACIONES: 3 PASOS Y EMPIEZAS TU RECUPERACIÓN CON MMS AHORA MISMO
         </Heading>
 
         <Container
@@ -47,19 +45,19 @@ export default function Hero2() {
         >
           <Hero2Card
             icon={<LuUsers fontSize="2.5rem" />}
-            title={t("step1_title")}
-            description={t("step1_desc")}  
+            title="Habla con Rosa"
+            description="Después de la charla, podrás completar tu matrícula en solo 5 minutos. Sin trámites complicados ni esperas, estarás listo para empezar de inmediato."
                     
             />
           <Hero2Card
             icon={<BsCalendarCheck fontSize="2.5rem" />}
-            title={t("step2_title")}
-            description={t("step2_desc")}          
+            title="Haz la matrícula"
+            description="Después de la charla, podrás completar tu matrícula en solo 5 minutos. Sin trámites complicados ni esperas, estarás listo para empezar de inmediato."        
             />
           <Hero2Card
             icon={<MdOutlineVerifiedUser fontSize="2.5rem" />}
-            title={t("step3_title")}
-            description={t("step3_desc")}         
+            title="Entra a tu primera sesión"
+            description="Una vez matriculado, accederás rápidamente a tu primera sesión grupal. Aquí empezarás a trabajar en tu recuperación con la guía de nuestros expertos."      
              />
         </Container>
       </Box>
