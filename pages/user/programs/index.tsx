@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import {
   Box,
-  Button,
   Container,
   Heading,
   Text,
@@ -14,6 +13,7 @@ import {
   Card,
   CardBody,
 } from "@chakra-ui/react";
+import PayButton from "@/components/ui/PayButton";
 
 export default function UserPrograms() {
   const { data: session, status } = useSession();
@@ -56,9 +56,7 @@ export default function UserPrograms() {
                   <Heading size="md">{product.name}</Heading>
                   <Text>{product.description}</Text>
                   <Text fontWeight="bold" mt={2}>{product.price}</Text>
-                  <Button colorScheme="blue" mt={4} w="100%" onClick={() => handlePurchase(product.id)}>
-                    Comprar
-                  </Button>
+                  <PayButton />
                 </CardBody>
               </Card>
             ))}

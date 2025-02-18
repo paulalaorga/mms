@@ -71,7 +71,7 @@ export const authOptions: AuthOptions = {
         token.isPatient = user.isPatient;
         token.groupProgramPaid = user.groupProgramPaid;
         token.individualProgram = user.individualProgram;
-        token.nextSessionDate = user.nextSessionDate ? user.nextSessionDate.toISOString() : null;
+        token.nextSessionDate = user.nextSessionDate ? new Date(user.nextSessionDate).toISOString() : null;
       }
       return token;
     },
@@ -80,15 +80,12 @@ export const authOptions: AuthOptions = {
       session.user = {
         ...session.user,
         id: token.sub ?? "",
-        role: (token.role as string) ?? "",
-        surname: (token.surname as string) ?? "",
-        isPatient: (token.isPatient as boolean) ?? false,
-        groupProgramPaid: (token.groupProgramPaid as boolean) ?? false,
-        individualProgram: (token.individualProgram as boolean) ?? false,
-        nextSessionDate:
-        token.nextSessionDate && typeof token.nextSessionDate === "string"
-        ? new Date(token.nextSessionDate)
-        : null,
+        role: token.role as string,
+        surname: token.surname as string,
+        isPatient: token.isPatient as boolean,
+        groupProgramPaid: token.groupProgramPaid as boolean,
+        individualProgram: token.individualProgram as boolean,
+        nextSessionDate: typeof token.nextSessionDate === "string" ? token.nextSessionDate : null,
       };
       return session;
     },
