@@ -1,8 +1,4 @@
-<<<<<<< HEAD
-import { DefaultSession } from "next-auth";
-=======
 import  DefaultUser from "next-auth";
->>>>>>> ae8c881b015f731fa0157f804124f7e1de6389d1
 
 declare module "next-auth" {
   interface User extends DefaultUser {
@@ -20,6 +16,7 @@ declare module "next-auth" {
       nextSessionDate?: string;
       role: string;
       provider?: string;
+      sub?: string;
     } 
 
   interface Session {

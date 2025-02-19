@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useSession } from "next-auth/react";
 import { useRouter } from "next/router";
 import {
   Box,
@@ -27,6 +28,7 @@ const validateEmail = (email: string): boolean => {
 };
 
 export default function LoginPage() {
+  const { data: session, status } = useSession();
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [emailError, setEmailError] = useState("");
@@ -34,6 +36,14 @@ export default function LoginPage() {
   const [passwordError, setPasswordError] = useState("");
   const [error, setError] = useState("");
   const [rememberMe, setRememberMe] = useState(false);
+
+  useEffect(() => {
+    if (status === "loading") return;
+    if (session?.user) {
+      const userRole = session.user.role;
+      router.push(userRole === "admin" ? "/admin" : "/user");
+    }
+  }, [session, status, router]);
 
   // ✅ Cargar datos almacenados en localStorage
   useEffect(() => {
@@ -50,9 +60,11 @@ export default function LoginPage() {
   useEffect(() => {
     const checkSession = async () => {
       const session = await getSession();
+
       if (session?.user) {
         const userRole = session.user.role;
-        router.push(userRole === "admin" ? "/admin" : "/user");
+        if (router.pathname !== "/admin" && router.pathname !== "/user")
+          router.push(userRole === "admin" ? "/admin" : "/user");
       }
     };
     checkSession();
@@ -123,11 +135,14 @@ export default function LoginPage() {
       return;
     }
 
-    const session = await getSession();
-    if (session?.user) {
-      const userRole = session.user.role;
-      router.push(userRole === "admin" ? "/admin" : "/user");
-    }
+    setTimeout(async () => {
+      const session = await getSession();
+
+      if (session?.user) {
+        const userRole = session.user.role;
+        router.push(userRole === "admin" ? "/admin" : "/user");
+      }
+    }, 1000);
   };
 
   // ✅ Manejo de cambio del checkbox
@@ -153,11 +168,11 @@ export default function LoginPage() {
           <Box p={6} w="100%" maxW="md" border={1} borderRadius="md">
             {error && <Alert status="error" title={error} />}
             <Stack spacing={4} border={1} borderRadius="md">
-            <NextLink href="/register">
-                  <Text color="accent.50" textAlign="center" cursor="pointer">
-                    ¿Todavía no tienes cuenta? Regístrate aquí
-                  </Text>
-                </NextLink>
+              <NextLink href="/register">
+                <Text color="accent.50" textAlign="center" cursor="pointer">
+                  ¿Todavía no tienes cuenta? Regístrate aquí
+                </Text>
+              </NextLink>
               <Input
                 bg="white"
                 placeholder="Correo electrónico"
@@ -189,7 +204,6 @@ export default function LoginPage() {
                     ¿Olvidaste la contraseña?
                   </Text>
                 </NextLink>
-               
               </Text>
               <MyButton
                 variant="outline"

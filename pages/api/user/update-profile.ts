@@ -1,42 +1,46 @@
 import { NextApiRequest, NextApiResponse } from "next";
-import { getServerSession } from "next-auth/next";
-import mongoose from "mongoose";
-import User from "@/models/User";
+import { getServerSession } from "next-auth";
 import { authOptions } from "../auth/[...nextauth]";
-import connectDB from "@/lib/mongodb"; // 🔹 Asegura la conexión antes de consultar
+import connectDB from "@/lib/mongodb";
+import User from "@/models/User";
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  console.log("🔍 Método recibido:", req.method);
+  
   if (req.method !== "PUT") {
     return res.status(405).json({ error: "Método no permitido" });
   }
 
-  await connectDB(); // 🔹 Asegurar conexión antes de cualquier operación
+  try {
+    await connectDB();
+    
+    const session = await getServerSession(req, res, authOptions);
+    console.log("🟢 Sesión obtenida:", session);
 
-  const session = await getServerSession(req, res, authOptions);
-  if (!session || !session.user) {
-    return res.status(401).json({ error: "No autenticado" });
+    if (!session) {
+      return res.status(401).json({ error: "No autorizado" });
+    }
+
+    console.log("🔹 Datos recibidos:", req.body);
+
+    const { name, surname, phone, dni, contractSigned, recoveryContact } = req.body;
+
+    const user = await User.findOneAndUpdate(
+      { email: session.user.email },
+      { name, surname, phone, dni, contractSigned, recoveryContact },
+      { new: true }
+    );
+
+    if (!user) {
+      return res.status(404).json({ error: "Usuario no encontrado" });
+    }
+
+    console.log("✅ Perfil actualizado:", user);
+
+    return res.status(200).json({ message: "Perfil actualizado", user });
+  } catch (error) {
+    console.error("❌ Error en el servidor:", error);
+    return res.status(500).json({ error: "Error en el servidor" });
   }
-
-  let user;
-  if (mongoose.Types.ObjectId.isValid(session.user.id)) {
-    user = await User.findById(session.user.id);
-  } else {
-    user = await User.findOne({ email: session.user.email }); // 🔹 Buscar por email si es usuario de Google
-  }
-
-  if (!user) {
-    return res.status(404).json({ error: "Usuario no encontrado" });
-  }
-
-  // Actualizar datos del usuario
-  const { name, surname, dni, phone, contractSigned, recoveryContact } = req.body;
-  user.name = name || user.name;
-  user.surname = surname || user.surname;
-  user.dni = dni || user.dni;
-  user.phone = phone || user.phone;
-  user.contractSigned = contractSigned ?? user.contractSigned;
-  user.recoveryContact = recoveryContact || user.recoveryContact;
-
-  await user.save();
-  return res.status(200).json({ message: "Perfil actualizado correctamente", user });
 }
+

@@ -15,7 +15,7 @@ function MyApp({ Component, pageProps }: AppProps) {
 
 
   return (
-    <SessionProvider session={pageProps.session ?? null}>
+    <SessionProvider session={pageProps.session}>
       <ChakraProvider theme={theme}>
         {isAdminRoute ? (
           <AdminLayout>

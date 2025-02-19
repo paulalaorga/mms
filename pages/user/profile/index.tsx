@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useSession } from "next-auth/react";
 import {
   Heading,
@@ -18,18 +18,27 @@ import {
   ModalBody,
   ModalFooter,
   useDisclosure,
+  Link,
   Text,
-  Link
 } from "@chakra-ui/react";
 import Input from "@/components/ui/Input";
 import MyButton from "@/components/ui/Button";
+
+interface UserData {
+  name?: string;
+  surname?: string;
+  dni?: string;
+  phone?: string;
+  recoveryContact?: string;
+  contractSigned?: boolean;
+  email?: string;
+}
 
 export default function UserProfile() {
   const { data: session, update } = useSession();
   const { isOpen, onOpen, onClose } = useDisclosure();
 
-  // Estados para los datos del usuario
-  const [userData, setUserData] = useState({
+  const [userData, setUserData] = useState<UserData>({
     name: "",
     surname: "",
     email: "",
@@ -42,12 +51,23 @@ export default function UserProfile() {
   const [password, setPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmNewPassword, setConfirmNewPassword] = useState("");
+
   const [loading, setLoading] = useState(false);
+
   const [successMessage, setSuccessMessage] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
+
   const [isGoogleUser, setIsGoogleUser] = useState(false);
 
-  // Cargar datos del usuario desde el backend
+  const [missingFields, setMissingFields] = useState<string[]>([]);
+
+  const checkMissingFields = useCallback((data: UserData) => {
+    const fields: (keyof UserData)[] = ["name", "surname", "dni", "phone", "recoveryContact"];
+    const emptyFields = fields.filter((field) => !data[field] || data[field] === "");
+    setMissingFields(emptyFields);
+  }, []);
+
+  // 🔹 Cargar datos del usuario desde la API
   useEffect(() => {
     if (!session?.user?.email) return;
 
@@ -57,9 +77,12 @@ export default function UserProfile() {
         if (!res.ok) throw new Error("Error al cargar los datos del perfil.");
 
         const data = await res.json();
-        console.log("✅ Datos del usuario recibidos:", data);
 
-        const userData = data.userData || {}; // Acceder a la clave correcta
+        if (!data || !data.userData) {
+          throw new Error("❌ userData no existe en la respuesta de la API.");
+        }
+
+        const userData = data.userData;
 
         setUserData({
           name: userData.name || "",
@@ -71,16 +94,57 @@ export default function UserProfile() {
           recoveryContact: userData.recoveryContact || "",
         });
 
-        setIsGoogleUser(data.message?.includes("Google")); // Detectar si es usuario de Google
+        setIsGoogleUser(session.user.provider === "google");
+
+        // 🔹 Comprobar si hay datos faltantes
+        checkMissingFields(userData);
       } catch {
         setErrorMessage("Error al cargar los datos del perfil.");
       }
     };
 
     fetchUserData();
-  }, [session]);
+  }, [session, checkMissingFields]);
+  
+  useEffect(() => {
+    if (!session?.user?.email) return;
+  
+    const fetchUserData = async () => {
+      try {
+        const res = await fetch("/api/user/profile");
+        if (!res.ok) throw new Error("Error al cargar los datos del perfil.");
+  
+        const data = await res.json();
+        if (!data || !data.userData) {
+          throw new Error("❌ userData no existe en la respuesta de la API.");
+        }
+  
+        const userData = data.userData;
+  
+        setUserData({
+          name: userData.name || "",
+          surname: userData.surname || "",
+          email: userData.email || "",
+          dni: userData.dni || "",
+          phone: userData.phone || "",
+          contractSigned: userData.contractSigned ?? false,
+          recoveryContact: userData.recoveryContact || "",
+        });
+  
+        setIsGoogleUser(session.user.provider === "google");
+  
+        // 🔹 Comprobar si hay datos faltantes
+        checkMissingFields(userData);
+      } catch {
+        setErrorMessage("Error al cargar los datos del perfil.");
+      }
+    };
+  
+    fetchUserData();
+  }, [session, checkMissingFields]);
+  
 
-  // Manejar cambios en los inputs
+  // 🔹 Manejar cambios en los inputs
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value, type, checked } = e.target;
     setUserData((prev) => ({
@@ -89,7 +153,45 @@ export default function UserProfile() {
     }));
   };
 
-  // Guardar cambios en el perfil
+const handleChangePassword = async () => {
+    setLoading(true);
+    setSuccessMessage("");
+    setErrorMessage("");
+
+    if (newPassword !== confirmNewPassword) {
+      setErrorMessage("Las contraseñas no coinciden.");
+      setLoading(false);
+      return;
+    }
+
+    try {
+      const res = await fetch("/api/user/change-password", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({
+          newPassword,
+        }),
+      });
+
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.error || "Error al cambiar la contraseña.");
+      }
+
+      setSuccessMessage("Contraseña cambiada correctamente.");
+      setNewPassword("");
+      setConfirmNewPassword("");
+    } catch {
+      setErrorMessage("Hubo un problema al cambiar la contraseña.");
+    } finally {
+      setLoading(false);
+      onClose();
+    }
+  }
+
+
+  // 🔹 Guardar cambios en el perfil
   const handleSave = async () => {
     setLoading(true);
     setSuccessMessage("");
@@ -105,48 +207,25 @@ export default function UserProfile() {
       const res = await fetch("/api/user/update-profile", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify({
           ...userData,
-          currentPassword: isGoogleUser ? undefined : password, // Si es Google, no manda password
+          currentPassword: isGoogleUser ? undefined : password,
         }),
       });
 
-      if (!res.ok) throw new Error("Error al actualizar perfil.");
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.error || "Error al actualizar perfil.");
+      }
 
-      await update(); // Actualizar sesión en NextAuth
+      await update();
       setSuccessMessage("Perfil actualizado correctamente.");
+      checkMissingFields(userData); // Vuelve a verificar si aún hay campos vacíos
     } catch {
       setErrorMessage("Hubo un problema al actualizar tu perfil.");
     } finally {
       setLoading(false);
-    }
-  };
-
-  // Guardar nueva contraseña
-  const handleChangePassword = async () => {
-    if (newPassword !== confirmNewPassword) {
-      setErrorMessage("Las contraseñas no coinciden.");
-      return;
-    }
-
-    try {
-      const res = await fetch("/api/user/change-password", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ newPassword }), // ✅ Enviar la nueva contraseña ingresada
-      });
-
-      const data = await res.json();
-      if (!res.ok)
-        throw new Error(data.message || "Error al cambiar la contraseña.");
-
-      setSuccessMessage("Contraseña actualizada correctamente.");
-      setNewPassword("");
-      setConfirmNewPassword("");
-      onClose(); // Cierra el modal
-    } catch (error) {
-      const message = error instanceof Error ? error.message : "Error al actualizar la contraseña.";
-      setErrorMessage(message);
     }
   };
 
@@ -170,13 +249,20 @@ export default function UserProfile() {
           </Alert>
         )}
 
+        {missingFields.length > 0 && (
+          <Alert status="error" mb={4}>
+            <AlertIcon />
+            <Text>Faltan datos por completar, rellena los campos en rojo</Text>
+          </Alert>
+        )}
+
         <VStack spacing={4} align="stretch">
-          <FormControl>
+          <FormControl isInvalid={missingFields.includes("name")}>
             <FormLabel>
-              Nombre actual:{" "}
-              {!userData.name && (
-                <Text display="inline" color="red">
-                  Faltan datos
+              Nombre:
+              {missingFields.includes("name") && (
+                <Text color="red.500" ml={2} display={"inline"}>
+                  Rellena estos datos debajo
                 </Text>
               )}
             </FormLabel>
@@ -185,15 +271,16 @@ export default function UserProfile() {
               name="name"
               value={userData.name}
               onChange={handleChange}
+              borderColor={missingFields.includes("name") ? "red.500" : undefined}
             />
           </FormControl>
 
-          <FormControl>
+          <FormControl isInvalid={missingFields.includes("surname")}>
             <FormLabel>
-              Apellidos actuales:{"  "}
-              {!userData.surname &&  (
-                <Text display="inline" color="red">
-                  Faltan datos
+              Apellidos:
+              {missingFields.includes("surname") && (
+                <Text color="red.500" ml={2} display={"inline"}>
+                  Rellena estos datos debajo
                 </Text>
               )}
             </FormLabel>
@@ -210,12 +297,11 @@ export default function UserProfile() {
             <Input value={userData.email} isDisabled />
           </FormControl>
 
-          <FormControl>
-            <FormLabel>
-              DNI/Pasaporte actual:{" "}
-              {!userData.dni && (
-                <Text display="inline" color="red">
-                  Faltan datos
+          <FormControl isInvalid={missingFields.includes("dni")}>
+            <FormLabel>DNI/Pasaporte:
+            {missingFields.includes("dni") && (
+                <Text color="red.500" ml={2} display={"inline"}>
+                  Rellena estos datos debajo
                 </Text>
               )}
             </FormLabel>
@@ -227,12 +313,11 @@ export default function UserProfile() {
             />
           </FormControl>
 
-          <FormControl>
-            <FormLabel>
-              Número de Teléfono actual:{" "}
-              {!userData.phone && (
-                <Text display="inline" color="red">
-                  Faltan datos
+          <FormControl isInvalid={missingFields.includes("phone")}>
+            <FormLabel>Teléfono:
+            {missingFields.includes("phone") && (
+                <Text color="red.500" ml={2} display={"inline"}>
+                  Rellena estos datos debajo
                 </Text>
               )}
             </FormLabel>
@@ -251,13 +336,17 @@ export default function UserProfile() {
               onChange={handleChange}
               mr={2}
             />
-            <Link href="/contrato.pdf" mb="0">Contrato Terapéutico Firmado</Link>
+            <Link href="/contrato.pdf">Contrato Terapéutico Firmado</Link>
           </FormControl>
 
-          <FormControl>
+          <FormControl isInvalid={missingFields.includes("recoveryContact")}>
             <FormLabel>
-              Contacto de Cómplice de Recuperación actual:{" "}
-              {userData.recoveryContact}
+              Contacto de recuperación:
+              {missingFields.includes("recoveryContact") && (
+                <Text color="red.500" ml={2} display={"inline"}>
+                  Rellena estos datos debajo
+                </Text>
+              )}
             </FormLabel>
             <Input
               placeholder="Contacto de recuperación"
@@ -283,8 +372,8 @@ export default function UserProfile() {
             Guardar Cambios
           </MyButton>
 
-          <MyButton colorScheme="orange" onClick={onOpen}>
-            Cambiar Contraseña
+          <MyButton variant="secondary" onClick={onOpen}>
+            Haz click aquí para cambiar tu Contraseña
           </MyButton>
         </VStack>
 

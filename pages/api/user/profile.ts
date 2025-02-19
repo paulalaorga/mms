@@ -2,7 +2,7 @@ import { NextApiRequest, NextApiResponse } from "next";
 import { getServerSession } from "next-auth/next";
 import connectDB from "@/lib/mongodb";
 import User from "@/models/User";
-import { authOptions }  from "../auth/[...nextauth]";
+import { authOptions } from "../auth/[...nextauth]";
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== "GET") {
@@ -22,6 +22,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     if (!user) {
       return res.status(404).json({ error: "Usuario no encontrado" });
     }
+
+    console.log("📌 Datos del usuario desde MongoDB:", user);
 
     return res.status(200).json({ 
       userData: {
