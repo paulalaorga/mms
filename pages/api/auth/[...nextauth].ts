@@ -1,11 +1,10 @@
 import NextAuth, { AuthOptions } from "next-auth";
-import { NextApiHandler } from "next";
 import CredentialsProvider from "next-auth/providers/credentials";
 import GoogleProvider from "next-auth/providers/google";
 import connectDB from "@/lib/mongodb";
 import User from "@/models/User";
+import { NextApiRequest, NextApiResponse } from "next";
 
-// Forzar ejecución en Serverless Functions
 export const config = {
   runtime: "nodejs", // Evita que NextAuth se ejecute en Edge Runtime
 };
@@ -16,6 +15,13 @@ export const authOptions: AuthOptions = {
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID!,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+      authorization: {
+        params: {
+          prompt: "consent",
+          access_type: "offline",
+          response_type: "code",
+        },
+      },
     }),
     CredentialsProvider({
       name: "Credentials",
@@ -45,6 +51,7 @@ export const authOptions: AuthOptions = {
 
         return {
           id: user._id.toString(),
+          name: user.name,
           email: user.email,
           role: user.role,
         };
@@ -52,51 +59,82 @@ export const authOptions: AuthOptions = {
     }),
   ],
   secret: process.env.NEXTAUTH_SECRET,
-  session: { strategy: "jwt", maxAge: 24 * 60 * 60 },
+  debug: true,
+  session: {
+    strategy: "jwt",
+    maxAge: 24 * 60 * 60,
+    updateAge: 24 * 60 * 60,
+  },
   callbacks: {
-    async signIn({ user }) {
+    async signIn({ user, account, profile }) {
+      console.log("🔍 Datos en signIn callback:", { user, account, profile });
+  
       await connectDB();
       let dbUser = await User.findOne({ email: user.email });
+  
+      // Si el usuario no existe en la base de datos, crearlo
       if (!dbUser) {
-        dbUser = await User.create({ email: user.email, role: "user" });
+        // Crear usuario en la base de datos si no existe
+        dbUser = await User.create({
+          email: user.email,
+          name: user.name,
+          role: "user", // Asignar un rol predeterminado (puedes modificarlo según lo que necesites)
+          isConfirmed: true, // Si quieres permitir acceso directo
+        });
       }
+  
+      // Devuelves el usuario para el siguiente paso
       return true;
     },
-
-    async jwt({ token, user }) {
+  
+    // JWT callback para asegurar que los datos del usuario se mantengan en el token
+    async jwt({ token, user, account }) {
+  
       if (user) {
-        token.id = user.id;
-        token.role = user.role;
-        token.surname = user.surname;
-        token.isPatient = user.isPatient;
-        token.groupProgramPaid = user.groupProgramPaid;
-        token.individualProgram = user.individualProgram;
-        token.nextSessionDate = user.nextSessionDate ? new Date(user.nextSessionDate).toISOString() : null;
+        await connectDB();
+        const dbUser = await User.findOne({ email: user.email });
+    
+        if (dbUser) {
+          token.id = dbUser._id.toString(); // Asigna el ID de MongoDB correctamente
+          token.role = dbUser.role;
+        }
       }
+    
+      if (account && account.provider === "google") {
+        token.accessToken = account.access_token;
+      }
+    
       return token;
     },
   
     async session({ session, token }) {
-      session.user = {
-        ...session.user,
-        id: token.sub ?? "",
-        role: token.role as string,
-        surname: token.surname as string,
-        isPatient: token.isPatient as boolean,
-        groupProgramPaid: token.groupProgramPaid as boolean,
-        individualProgram: token.individualProgram as boolean,
-        nextSessionDate: typeof token.nextSessionDate === "string" ? token.nextSessionDate : null,
-      };
+    
+      if (token) {
+        session.user = {
+          id: token.id, // Aquí aseguramos que se pase el ID de MongoDB
+          name: token.name ?? session.user.name,
+          email: token.email ?? session.user.email,
+          picture: token.picture ?? session.user.picture,
+          role: token.role ?? "user",
+        };
+      }
+    
       return session;
     },
-    async redirect({ baseUrl }) {
-      return `${baseUrl}/dashboard`;
-    },
+    
+  
+    // Redirección personalizada después de iniciar sesión
+    async redirect(params: { url: string; baseUrl: string }) {
+      if (params.url.startsWith(params.baseUrl)) return params.url;
+      if (params.url.includes("/api/auth/signout")) return `${params.baseUrl}/`;
+      return `${params.baseUrl}/user`;
+    }
   },
-  pages: { signIn: "/login", error: "/error", signOut: "/index" },
+  
+  pages: { signIn: "/login", error: "/error", signOut: "/" },
 };
 
-// 🔹 Ahora usamos `authOptions` en NextAuth
-const authHandler: NextApiHandler = (req, res) => NextAuth(req, res, authOptions);
+const authHandler = async (req: NextApiRequest, res: NextApiResponse) =>
+  NextAuth(req, res, authOptions);
 
 export default authHandler;

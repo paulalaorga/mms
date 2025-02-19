@@ -1,25 +1,43 @@
-import { DefaultSession } from "next-auth";
+import  DefaultUser from "next-auth";
 
 declare module "next-auth" {
-  interface Session {
-    user: {
-      id: string;
+  interface User extends DefaultUser {
+      id?: string;
+      name: string;
+      surname?: string;
+      email: string;
+      phone?: string;
+      dni?: string;
+      contractSigned?: boolean;
+      recoveryContact?: string;
+      isPatient?: boolean;
+      groupProgramPaid?: boolean;
+      individualProgram?: boolean;
+      nextSessionDate?: string;
       role: string;
+      provider?: string;
+      sub?: string;
+    } 
+
+  interface Session {
+    user: DefaultUser & {
+      id: string;
       surname?: string;
       isPatient?: boolean;
       groupProgramPaid?: boolean;
       individualProgram?: boolean;
-      nextSessionDate?: string | null;
-    } & DefaultSession["user"];
+      nextSessionDate?: Date | null;
+      role: string;
+    };
   }
 
-  interface JWT {
+  interface User extends DefaultUser {
     id: string;
-    role: string;
     surname?: string;
     isPatient?: boolean;
     groupProgramPaid?: boolean;
     individualProgram?: boolean;
-    nextSessionDate?: string | null;
+    nextSessionDate?: Date | null;
+    role: string;
   }
 }

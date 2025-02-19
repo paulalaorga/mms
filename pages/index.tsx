@@ -1,4 +1,3 @@
-"use client";
 
 import Navbar from "../src/components/layout/Navbar";
 import CallToAction from "@/components/layout/CallToAction";
@@ -10,16 +9,17 @@ import Hero5 from "./home/Hero5";
 import Footer from "@/components/layout/Footer";
 
 
+
 export default function HomePage() {
   return (
     <>
       <Navbar />
-          <Hero1 />
-          <Hero2 />
-          <Hero3 />
-          <Hero4 />
-          <Hero5 />
-          <Footer />
+      <Hero1 />
+      <Hero2 />
+      <Hero3 />
+      <Hero4 />
+      <Hero5 />
+      <Footer />
       <CallToAction />
     </>
   );

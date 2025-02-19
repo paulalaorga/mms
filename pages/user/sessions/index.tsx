@@ -1,10 +1,12 @@
-"use client";
+/* "use client";
 
 import { useState, useEffect } from "react";
 import { Box, Heading, Text, Button } from "@chakra-ui/react";
 import { Calendar } from "react-calendar";
+ */
 
-export default function SesionesPage() {
+export default function SesionesPage() {}
+  /*
   const [sessions, setSessions] = useState([]);
   const [selectedDate, setSelectedDate] = useState(new Date());
 
@@ -39,3 +41,4 @@ export default function SesionesPage() {
     </>
   );
 }
+ */

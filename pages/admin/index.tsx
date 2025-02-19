@@ -4,7 +4,7 @@ import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { Heading, Text, Spinner, Container, VStack } from "@chakra-ui/react";
-import AdminLayout from "./layout";
+import AdminLayout from "../../src/components/layout/AdminLayout";
 
 export default function AdminPage() {
   const { data: session, status } = useSession();
@@ -12,10 +12,15 @@ export default function AdminPage() {
 
   useEffect(() => {
     if (status === "loading") return;
-    if (!session) {
-      router.push("/login");
+
+    console.log("Estado de sesión:", { session, status });
+
+    if (!session?.user) {
+      console.log("🔴 Sesion no encontrada, redirigiendo a /login desde Admin/index");
+      router.replace("/login");
+
     } else if (session.user?.role !== "admin") {
-      router.push("/user"); // Redirige a usuarios normales
+      router.replace("/user"); // Redirige a usuarios normales
     }
   }, [session, status, router]);
 

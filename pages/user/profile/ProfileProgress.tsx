@@ -10,10 +10,9 @@ import {
   Box,
   Link as ChakraLink,
 } from "@chakra-ui/react";
-import NextLink from "next/link";
 
 export default function ProfileProgress() {
-  const { data: session } = useSession();
+  const { data: session, status } = useSession();
   const [completionPercentage, setCompletionPercentage] = useState(0);
   const [missingFields, setMissingFields] = useState<string[]>([]);
 
@@ -23,30 +22,40 @@ export default function ProfileProgress() {
     const fetchUserData = async () => {
       try {
         const res = await fetch("/api/user/profile");
-        if (!res.ok) throw new Error("Error al cargar los datos del perfil.");
+        if (!res.ok) {
+          const errorData = await res.json();
+          throw new Error(errorData.error || "Error desconocido");
+        }
 
         const data = await res.json();
         console.log("✅ Datos del usuario recibidos:", data);
 
-        const user = data.userData || data;
+        // Verificar si `userData` existe
+        if (!data || !data.userData) {
+          throw new Error("❌ userData no existe en la respuesta de la API.");
+        }
 
-        const totalFields = 7; // Número total de campos requeridos
+        // Asegurar que userData está definido
+        const userData = data.userData;
+        if (!userData) throw new Error("No se encontraron datos del usuario.");
+
+        const totalFields = 7;
         let filledFields = 0;
         const missing: string[] = [];
 
-        if (!user.name) missing.push("Nombre");
+        if (!userData.name) missing.push("Nombre");
         else filledFields++;
-        if (!user.surname) missing.push("Apellido");
+        if (!userData.surname) missing.push("Apellido");
         else filledFields++;
-        if (!user.email) missing.push("Email");
+        if (!userData.email) missing.push("Email");
         else filledFields++;
-        if (!user.dni) missing.push("DNI");
+        if (!userData.dni) missing.push("DNI");
         else filledFields++;
-        if (!user.phone) missing.push("Teléfono");
+        if (!userData.phone) missing.push("Teléfono");
         else filledFields++;
-        if (!user.contractSigned) missing.push("Contrato firmado");
+        if (!userData.contractSigned) missing.push("Contrato firmado");
         else filledFields++;
-        if (!user.recoveryContact) missing.push("Contacto de recuperación");
+        if (!userData.recoveryContact) missing.push("Contacto de recuperación");
         else filledFields++;
 
         setMissingFields(missing);
@@ -58,6 +67,14 @@ export default function ProfileProgress() {
 
     fetchUserData();
   }, [session]);
+
+  // Si aún está cargando, evitar renderizar datos incompletos
+  if (status === "loading") return <p>Cargando perfil...</p>;
+
+  // Si no hay sesión, manejar el estado de error
+  if (!session || !session.user) return <p>Error al cargar perfil</p>;
+
+  // 🔹 Ocultar la barra si el perfil está completo
   if (completionPercentage === 100) return null;
 
   return (
@@ -66,14 +83,18 @@ export default function ProfileProgress() {
         <Box w="100%" textAlign="center">
           <Alert status="warning" mt={4}>
             <AlertIcon />
-            Tu perfil está incompleto, faltan los siguientes datos:{" "}{missingFields.join(", ")}
+            Tu perfil está incompleto, faltan los siguientes datos:{" "}
+            {missingFields.join(", ")}
           </Alert>
           <Progress mt={2} colorScheme="orange" value={completionPercentage} />
-          <NextLink href="/user/profile" passHref>
-            <ChakraLink mt={2} color="blue.500" fontWeight="bold">
-              Completa tu perfil
-            </ChakraLink>
-          </NextLink>
+          <ChakraLink
+            href="/user/profile"
+            mt={2}
+            color="blue.500"
+            fontWeight="bold"
+          >
+            Completa tu perfil
+          </ChakraLink>
         </Box>
       )}
     </Container>

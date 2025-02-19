@@ -2,6 +2,7 @@
 
 import { useSession } from "next-auth/react";
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import {
   Container,
   Heading,
@@ -12,12 +13,14 @@ import {
   AlertIcon,
   Box,
 } from "@chakra-ui/react";
-import { IUser }  from "@/models/User";
-import UserLayout from "./layout";
+import { IUser } from "@/models/User";
+import UserLayout from "../../src/components/layout/UserLayout";
 import ProfileProgress from "./profile/ProfileProgress";
 
 export default function UserDashboard() {
   const { data: session, status } = useSession();
+  const router = useRouter();
+
   const [error, setError] = useState<string | null>(null);
   const [userData, setUserData] = useState<IUser | null>(null);
 
@@ -41,6 +44,13 @@ export default function UserDashboard() {
     fetchUserData();
   }, [session]);
 
+  useEffect(() => {
+    if (status === "unauthenticated") {
+      console.log("🔴 No autenticado, redirigiendo a /login");
+      router.push("/login"); // Redirigir a la página de login
+    }
+  }, [status, router]);
+
   if (status === "loading") {
     return (
       <Container centerContent>
@@ -59,13 +69,15 @@ export default function UserDashboard() {
       </Container>
     );
   }
+  console.log("🔍 Estado de sesión:", status, "Datos de sesión:", session);
+
 
   return (
     <Container centerContent py={10}>
       <VStack spacing={6} align="center">
         <Heading size="lg">
-          Bienvenido, {session.user.name || "Usuario"}{" "}
-          {userData?.surname || ""} 🎉
+          Bienvenido, {session.user.name || "Usuario"} {userData?.surname || ""}{" "}
+          🎉
         </Heading>
         <Text fontSize="lg">Este es tu panel de usuario</Text>
 

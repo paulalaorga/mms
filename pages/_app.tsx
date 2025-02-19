@@ -4,15 +4,15 @@ import { ChakraProvider } from "@chakra-ui/react";
 import { SessionProvider } from "next-auth/react";
 import { useRouter } from "next/router";
 import { Analytics } from "@vercel/analytics/react"; // Import de Vercel Analytics
-
-import AdminLayout from "../pages/admin/layout"; // Layout de Admin
-import UserLayout from "../pages/user/layout"; // Layout de Usuario
+import AdminLayout from "../src/components/layout/AdminLayout"; // Layout de Admin
+import UserLayout from "../src/components/layout/UserLayout"; // Layout de Usuario
 import theme from "../src/theme"; // Importa el tema corregido
 
-export default function MyApp({ Component, pageProps }: AppProps) {
+function MyApp({ Component, pageProps }: AppProps) {
   const router = useRouter();
   const isAdminRoute = router.pathname.startsWith("/admin");
   const isUserRoute = router.pathname.startsWith("/user");
+
 
   return (
     <SessionProvider session={pageProps.session}>
@@ -34,3 +34,5 @@ export default function MyApp({ Component, pageProps }: AppProps) {
     </SessionProvider>
   );
 }
+
+export default MyApp;

@@ -10,13 +10,13 @@ const Hero2Card: React.FC<HeroCardProps> = ({ icon, title, description }) => {
   return (
     <Box
       flex="1" // Hace que todos tengan el mismo ancho
-      minH="300px" // Asegura que todas las cajas tengan la misma altura
+      height={"100%"} // Asegura que todas las cajas tengan la misma altura
       maxWidth="350px" // Mantiene uniformidad
       minWidth="280px" // Evita que se hagan muy pequeñas en móviles
       display="flex"
       flexDirection="column"
       alignItems="center"
-      justifyContent="center"
+      justifyContent="space-between"
       bg="white"
       p={6}
     >
