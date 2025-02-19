@@ -192,6 +192,7 @@ export default function LoginPage() {
                 onKeyDown={handleKeyDown} // ✅ Permite `Enter`
               />
               <Checkbox
+              id="rememberMe"
                 color="whiteAlpha.800"
                 isChecked={rememberMe}
                 onChange={handleCheckboxChange}

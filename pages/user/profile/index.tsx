@@ -62,8 +62,16 @@ export default function UserProfile() {
   const [missingFields, setMissingFields] = useState<string[]>([]);
 
   const checkMissingFields = useCallback((data: UserData) => {
-    const fields: (keyof UserData)[] = ["name", "surname", "dni", "phone", "recoveryContact"];
-    const emptyFields = fields.filter((field) => !data[field] || data[field] === "");
+    const fields: (keyof UserData)[] = [
+      "name",
+      "surname",
+      "dni",
+      "phone",
+      "recoveryContact",
+    ];
+    const emptyFields = fields.filter(
+      (field) => !data[field] || data[field] === ""
+    );
     setMissingFields(emptyFields);
   }, []);
 
@@ -105,22 +113,22 @@ export default function UserProfile() {
 
     fetchUserData();
   }, [session, checkMissingFields]);
-  
+
   useEffect(() => {
     if (!session?.user?.email) return;
-  
+
     const fetchUserData = async () => {
       try {
         const res = await fetch("/api/user/profile");
         if (!res.ok) throw new Error("Error al cargar los datos del perfil.");
-  
+
         const data = await res.json();
         if (!data || !data.userData) {
           throw new Error("❌ userData no existe en la respuesta de la API.");
         }
-  
+
         const userData = data.userData;
-  
+
         setUserData({
           name: userData.name || "",
           surname: userData.surname || "",
@@ -130,19 +138,18 @@ export default function UserProfile() {
           contractSigned: userData.contractSigned ?? false,
           recoveryContact: userData.recoveryContact || "",
         });
-  
+
         setIsGoogleUser(session.user.provider === "google");
-  
+
         // 🔹 Comprobar si hay datos faltantes
         checkMissingFields(userData);
       } catch {
         setErrorMessage("Error al cargar los datos del perfil.");
       }
     };
-  
+
     fetchUserData();
   }, [session, checkMissingFields]);
-  
 
   // 🔹 Manejar cambios en los inputs
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -153,7 +160,7 @@ export default function UserProfile() {
     }));
   };
 
-const handleChangePassword = async () => {
+  const handleChangePassword = async () => {
     setLoading(true);
     setSuccessMessage("");
     setErrorMessage("");
@@ -188,8 +195,7 @@ const handleChangePassword = async () => {
       setLoading(false);
       onClose();
     }
-  }
-
+  };
 
   // 🔹 Guardar cambios en el perfil
   const handleSave = async () => {
@@ -258,7 +264,7 @@ const handleChangePassword = async () => {
 
         <VStack spacing={4} align="stretch">
           <FormControl isInvalid={missingFields.includes("name")}>
-            <FormLabel>
+            <FormLabel htmlFor="name">
               Nombre:
               {missingFields.includes("name") && (
                 <Text color="red.500" ml={2} display={"inline"}>
@@ -267,16 +273,17 @@ const handleChangePassword = async () => {
               )}
             </FormLabel>
             <Input
+              id="name"
               placeholder="Nombre"
               name="name"
               value={userData.name}
               onChange={handleChange}
-              borderColor={missingFields.includes("name") ? "red.500" : undefined}
+              autoComplete="given-name"
             />
           </FormControl>
 
           <FormControl isInvalid={missingFields.includes("surname")}>
-            <FormLabel>
+            <FormLabel htmlFor="surname">
               Apellidos:
               {missingFields.includes("surname") && (
                 <Text color="red.500" ml={2} display={"inline"}>
@@ -285,52 +292,67 @@ const handleChangePassword = async () => {
               )}
             </FormLabel>
             <Input
+              id="surname"
               placeholder="Apellidos"
               name="surname"
               value={userData.surname}
               onChange={handleChange}
+              autoComplete="family-name"
             />
           </FormControl>
 
           <FormControl isReadOnly>
-            <FormLabel>Email registrado:</FormLabel>
-            <Input value={userData.email} isDisabled />
+            <FormLabel htmlFor="email">Email registrado:</FormLabel>
+            <Input
+              id="email"
+              name="email"
+              value={userData.email}
+              isDisabled
+              autoComplete="email"
+            />
           </FormControl>
 
           <FormControl isInvalid={missingFields.includes("dni")}>
-            <FormLabel>DNI/Pasaporte:
-            {missingFields.includes("dni") && (
+            <FormLabel htmlFor="dni">
+              DNI/Pasaporte:
+              {missingFields.includes("dni") && (
                 <Text color="red.500" ml={2} display={"inline"}>
                   Rellena estos datos debajo
                 </Text>
               )}
             </FormLabel>
             <Input
+              id="dni"
               placeholder="DNI/Pasaporte"
               name="dni"
               value={userData.dni}
               onChange={handleChange}
+              autoComplete="off"
             />
           </FormControl>
 
           <FormControl isInvalid={missingFields.includes("phone")}>
-            <FormLabel>Teléfono:
-            {missingFields.includes("phone") && (
+            <FormLabel htmlFor="phone">
+              Teléfono:
+              {missingFields.includes("phone") && (
                 <Text color="red.500" ml={2} display={"inline"}>
                   Rellena estos datos debajo
                 </Text>
               )}
             </FormLabel>
             <Input
+              id="phone"
               placeholder="Teléfono"
               name="phone"
               value={userData.phone}
               onChange={handleChange}
+              autoComplete="tel"
             />
           </FormControl>
 
           <FormControl display="flex" alignItems="center">
             <Checkbox
+            id="contractSigned"
               name="contractSigned"
               isChecked={userData.contractSigned}
               onChange={handleChange}
@@ -340,7 +362,7 @@ const handleChangePassword = async () => {
           </FormControl>
 
           <FormControl isInvalid={missingFields.includes("recoveryContact")}>
-            <FormLabel>
+            <FormLabel htmlFor="recoveryContact">
               Contacto de recuperación:
               {missingFields.includes("recoveryContact") && (
                 <Text color="red.500" ml={2} display={"inline"}>
@@ -349,17 +371,20 @@ const handleChangePassword = async () => {
               )}
             </FormLabel>
             <Input
+            id="recoveryContact"
               placeholder="Contacto de recuperación"
               name="recoveryContact"
               value={userData.recoveryContact}
               onChange={handleChange}
+              autoComplete="off"
             />
           </FormControl>
 
           {!isGoogleUser && (
             <FormControl>
-              <FormLabel>Contraseña Actual</FormLabel>
+              <FormLabel htmlFor="password">Contraseña Actual</FormLabel>
               <Input
+              id="password"
                 type="password"
                 placeholder="Contraseña actual"
                 value={password}
