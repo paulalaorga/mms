@@ -89,7 +89,6 @@ export const authOptions: AuthOptions = {
   
     // JWT callback para asegurar que los datos del usuario se mantengan en el token
     async jwt({ token, user, account }) {
-      console.log("🔐 Callback JWT - Token antes:", token);
   
       if (user) {
         await connectDB();
@@ -105,12 +104,10 @@ export const authOptions: AuthOptions = {
         token.accessToken = account.access_token;
       }
     
-      console.log("🔐 Callback JWT - Token después:", token);
       return token;
     },
   
     async session({ session, token }) {
-      console.log("🔐 Callback de sesión - Token recibido:", token);
     
       if (token) {
         session.user = {
@@ -122,7 +119,6 @@ export const authOptions: AuthOptions = {
         };
       }
     
-      console.log("🔐 Callback de sesión - Sesión enviada al frontend:", session);
       return session;
     },
     

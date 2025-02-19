@@ -14,7 +14,7 @@ import {
   Box,
 } from "@chakra-ui/react";
 import { IUser } from "@/models/User";
-import UserLayout from "./layout";
+import UserLayout from "../../src/components/layout/UserLayout";
 import ProfileProgress from "./profile/ProfileProgress";
 
 export default function UserDashboard() {

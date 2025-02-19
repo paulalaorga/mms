@@ -8,11 +8,19 @@ if (!MONGODB_URI) {
 
 // Extender el objeto global para evitar múltiples conexiones en desarrollo
 declare global {
-  let mongooseConnection: { conn: Connection | null; promise: Promise<Connection> | null };
+  let mongooseConnection: {
+    conn: Connection | null;
+    promise: Promise<Connection> | null;
+  };
 }
 
 // Usamos una variable global para evitar múltiples conexiones a MongoDB en desarrollo
-const globalWithMongoose = global as typeof global & { mongooseConnection?: { conn: Connection | null; promise: Promise<Connection> | null } };
+const globalWithMongoose = global as typeof global & {
+  mongooseConnection?: {
+    conn: Connection | null;
+    promise: Promise<Connection> | null;
+  };
+};
 
 if (!globalWithMongoose.mongooseConnection) {
   globalWithMongoose.mongooseConnection = { conn: null, promise: null };
@@ -27,13 +35,28 @@ export default async function connectDB(): Promise<Connection> {
   }
 
   if (!cached.promise) {
-    cached.promise = mongoose.connect(MONGODB_URI).then((mongooseInstance) => {
-      console.log("✅ Conectado a la base de datos:", mongooseInstance.connection.name);
-      return mongooseInstance.connection;
-    }).catch((error) => {
-      console.error("❌ Error conectando a MongoDB:", error);
-      throw error;
-    });
+    console.log("🔗 Iniciando nueva conexión a MongoDB...");
+    cached.promise = mongoose
+      .connect(MONGODB_URI)
+      .then((mongooseInstance) => {
+        console.log(
+          "✅ Conectado a la base de datos:",
+          mongooseInstance.connection.name
+        );
+        console.log(
+          "📌 Base de datos actual:",
+          mongooseInstance.connection.db?.databaseName || "unknown"
+        );
+        console.log(
+          "📌 Colecciones disponibles:",
+          Object.keys(mongooseInstance.connection.collections)
+        );
+        return mongooseInstance.connection;
+      })
+      .catch((error) => {
+        console.error("❌ Error conectando a MongoDB:", error);
+        throw error;
+      });
   }
 
   cached.conn = await cached.promise;

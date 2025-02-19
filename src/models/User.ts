@@ -1,7 +1,7 @@
-import mongoose, { Schema } from "mongoose";
+import mongoose, { Schema, Types } from "mongoose";
 
 export interface IUser {
-  _id: string;
+  _id: Types.ObjectId;
   name: string;
   surname?: string;
   dni?: string;
@@ -24,7 +24,7 @@ export interface IUser {
 }
 
 const UserSchema = new Schema<IUser>({
-  _id:{ type: String, required: true, unique: true },
+  _id:{ type: mongoose.Schema.Types.ObjectId, auto: true },
   name: { type: String, required: true },
   surname: { type: String }, // ✅ Apellidos
   dni: { type: String }, // ✅ DNI/Pasaporte
