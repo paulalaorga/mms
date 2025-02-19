@@ -5,10 +5,15 @@ import { useRouter } from "next/router";
 import {
   Box,
   Heading,
-  Text,
+  Input,
+  Select,
+  Button,
   Spinner,
   Alert,
   AlertIcon,
+  FormControl,
+  FormLabel,
+  Switch,
 } from "@chakra-ui/react";
 
 interface User {
@@ -36,19 +41,20 @@ export default function UserDetailPage() {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     if (!router.isReady || !id || typeof id !== "string") return;
 
-    console.log("🔍 Fetching user with ID:", id); // Debugging log
+    console.log("🔍 Fetching user with ID:", id);
 
     const fetchUser = async () => {
       try {
         const res = await fetch(`/api/admin/users/${id}`);
 
         if (!res.ok) {
-          if (res.status === 404) throw new Error("User Not Found");
-          throw new Error("Failed to load user");
+          if (res.status === 404) throw new Error("Usuario no encontrado");
+          throw new Error("Error al cargar el usuario");
         }
 
         const data = await res.json();
@@ -56,7 +62,9 @@ export default function UserDetailPage() {
         setUser(data);
       } catch (error) {
         console.error("❌ Fetch Error:", error);
-        setError(error instanceof Error ? error.message : 'An unexpected error occurred');
+        setError(
+          error instanceof Error ? error.message : "Ocurrió un error inesperado"
+        );
       } finally {
         setLoading(false);
       }
@@ -64,6 +72,37 @@ export default function UserDetailPage() {
 
     fetchUser();
   }, [id, router.isReady]);
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    if (!user) return;
+    setUser({ ...user, [e.target.name]: e.target.value });
+  };
+
+  const handleToggle = (key: keyof User) => {
+    if (!user) return;
+    setUser({ ...user, [key]: !user[key] });
+  };
+
+  const handleSave = async () => {
+    if (!user) return;
+    setSaving(true);
+
+    try {
+      const res = await fetch(`/api/admin/users/${id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(user),
+      });
+
+      if (!res.ok) throw new Error("Error al actualizar el usuario");
+
+      console.log("✅ Usuario actualizado");
+    } catch (error) {
+      console.error("❌ Error al guardar:", error);
+    } finally {
+      setSaving(false);
+    }
+  };
 
   if (loading) return <Spinner />;
   if (error)
@@ -81,67 +120,103 @@ export default function UserDetailPage() {
       </Alert>
     );
 
-    return (
-      <Box p={6}>
-        <Heading size="lg">Detalles del Usuario</Heading>
-        <Text>
-          <strong>Nombre:</strong> {user.name || "No disponible"}
-        </Text>
-        <Text>
-          <strong>Apellidos:</strong> {user.surname || "No disponible"}
-        </Text>
-        <Text>
-          <strong>Email:</strong> {user.email}
-        </Text>
-        <Text>
-          <strong>DNI/Pasaporte:</strong> {user.dni || "No disponible"}
-        </Text>
-        <Text>
-          <strong>Teléfono:</strong> {user.phone || "No disponible"}
-        </Text>
-        <Text>
-          <strong>Rol:</strong> {user.role}
-        </Text>
-        <Text>
-          <strong>Estado de Confirmación:</strong>{" "}
-          {user.isConfirmed ? "✅ Confirmado" : "❌ No confirmado"}
-        </Text>
-        <Text>
-          <strong>Contrato firmado:</strong>{" "}
-          {user.contractSigned ? "✅ Sí" : "❌ No"}
-        </Text>
-        <Text>
-          <strong>¿Es paciente?</strong>{" "}
-          {user.isPatient ? "✅ Sí" : "❌ No"}
-        </Text>
-        <Text>
-          <strong>Ha pagado el programa grupal:</strong>{" "}
-          {user.groupProgramPaid ? "✅ Sí" : "❌ No"}
-        </Text>
-        <Text>
-          <strong>Tiene un programa individual:</strong>{" "}
-          {user.individualProgram ? "✅ Sí" : "❌ No"}
-        </Text>
-        <Text>
-          <strong>Próxima sesión individual:</strong>{" "}
-          {user.nextSessionDate
-            ? new Date(user.nextSessionDate).toLocaleDateString()
-            : "No programada"}
-        </Text>
-        <Text>
-          <strong>Contacto de recuperación:</strong>{" "}
-          {user.recoveryContact || "No disponible"}
-        </Text>
-        <Text>
-          <strong>Proveedor de autenticación:</strong>{" "}
-          {user.provider || "Correo electrónico"}
-        </Text>
-        <Text>
-          <strong>Fecha de Registro:</strong>{" "}
-          {user.createdAt
-            ? new Date(user.createdAt).toLocaleDateString()
-            : "Fecha no disponible"}
-        </Text>
-      </Box>
-    );
-  }
+  return (
+    <Box p={6}>
+      <Heading size="lg" mb={4}>Detalles del Usuario</Heading>
+
+      <FormControl>
+        <FormLabel>Nombre</FormLabel>
+        <Input name="name" value={user.name} onChange={handleChange} />
+      </FormControl>
+
+      <FormControl mt={4}>
+        <FormLabel>Apellidos</FormLabel>
+        <Input name="surname" value={user.surname || ""} onChange={handleChange} />
+      </FormControl>
+
+      <FormControl mt={4}>
+        <FormLabel>Email</FormLabel>
+        <Input name="email" value={user.email} isDisabled />
+      </FormControl>
+
+      <FormControl mt={4}>
+        <FormLabel>DNI/Pasaporte</FormLabel>
+        <Input name="dni" value={user.dni || ""} onChange={handleChange} />
+      </FormControl>
+
+      <FormControl mt={4}>
+        <FormLabel>Teléfono</FormLabel>
+        <Input name="phone" value={user.phone || ""} onChange={handleChange} />
+      </FormControl>
+
+      <FormControl mt={4}>
+        <FormLabel>Rol</FormLabel>
+        <Select name="role" value={user.role} onChange={handleChange}>
+          <option value="user">Usuario</option>
+          <option value="admin">Admin</option>
+          <option value="therapist">Terapeuta</option>
+        </Select>
+      </FormControl>
+
+      <FormControl display="flex" alignItems="center" mt={4}>
+        <FormLabel mb="0">Confirmado</FormLabel>
+        <Switch
+          isChecked={user.isConfirmed}
+          onChange={() => handleToggle("isConfirmed")}
+        />
+      </FormControl>
+
+      <FormControl display="flex" alignItems="center" mt={4}>
+        <FormLabel mb="0">Contrato firmado</FormLabel>
+        <Switch
+          isChecked={user.contractSigned}
+          onChange={() => handleToggle("contractSigned")}
+        />
+      </FormControl>
+
+      <FormControl display="flex" alignItems="center" mt={4}>
+        <FormLabel mb="0">¿Es paciente?</FormLabel>
+        <Switch isChecked={user.isPatient} onChange={() => handleToggle("isPatient")} />
+      </FormControl>
+
+      <FormControl display="flex" alignItems="center" mt={4}>
+        <FormLabel mb="0">Ha pagado el programa grupal</FormLabel>
+        <Switch
+          isChecked={user.groupProgramPaid}
+          onChange={() => handleToggle("groupProgramPaid")}
+        />
+      </FormControl>
+
+      <FormControl display="flex" alignItems="center" mt={4}>
+        <FormLabel mb="0">Tiene un programa individual</FormLabel>
+        <Switch
+          isChecked={user.individualProgram}
+          onChange={() => handleToggle("individualProgram")}
+        />
+      </FormControl>
+
+      <FormControl mt={4}>
+        <FormLabel>Próxima sesión individual</FormLabel>
+        <Input
+          type="date"
+          name="nextSessionDate"
+          value={user.nextSessionDate || ""}
+          onChange={handleChange}
+        />
+      </FormControl>
+
+      <FormControl mt={4}>
+        <FormLabel>Contacto de recuperación</FormLabel>
+        <Input
+          name="recoveryContact"
+          value={user.recoveryContact || ""}
+          onChange={handleChange}
+        />
+      </FormControl>
+
+      <Button mt={6} colorScheme="blue" onClick={handleSave} isLoading={saving}>
+        Guardar cambios
+      </Button>
+    </Box>
+  );
+}
