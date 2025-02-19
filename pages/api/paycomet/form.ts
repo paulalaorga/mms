@@ -2,23 +2,34 @@ import type { NextApiRequest, NextApiResponse } from "next";
 import crypto from "crypto";
 
 const PAYCOMET_MERCHANT = process.env.PAYCOMET_MERCHANT_CODE!;
-const PAYCOMET_TERMINAL = process.env.PAYCOMET_TERMINAL_ID!;
+const PAYCOMET_TERMINAL = process.env.PAYCOMET_TERMINAL!;
 const PAYCOMET_PASSWORD = process.env.PAYCOMET_PASSWORD!;
 const PAYCOMET_BASE_URL = "https://secure.paycomet.com/gateway/form.html";
+
+// 📌 Definir pagos predeterminados
+const PAYMENT_OPTIONS: Record<string, number> = {
+  "single_session": 5000, // 50.00 €
+  "session_bundle": 20000, // 200.00 €
+  "group_program": 15000, // 150.00 €
+};
 
 export default function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== "POST") {
     return res.status(405).json({ error: "Método no permitido" });
   }
 
-  const { amount, order } = req.body;
+  const { order, paymentType } = req.body;
 
-  if (!amount || !order) {
+  if (!order || !paymentType) {
     return res.status(400).json({ error: "Faltan parámetros requeridos" });
   }
 
+  if (!PAYMENT_OPTIONS[paymentType]) {
+    return res.status(400).json({ error: "Tipo de pago no válido" });
+  }
+
+  const amountInCents = PAYMENT_OPTIONS[paymentType];
   const currency = 978; // EUR
-  const amountInCents = amount * 100; // Convertir a céntimos
 
   // 🔹 Generar firma de seguridad SHA-512
   const signature = crypto
