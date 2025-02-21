@@ -33,21 +33,19 @@ const AdminLayout = ({ children }: { children: ReactNode }) => {
           <Link as={NextLink} href="/admin/users" _hover={{ textDecoration: "underline" }}>
             Lista de Usuarios
           </Link>
+          <Link as={NextLink} href="/admin/payments" _hover={{ textDecoration: "underline" }}>
+            Lista de Pagos
+          </Link>
           <Link as={NextLink} href="/admin/programs" _hover={{ textDecoration: "underline" }}>
             Administrar Programas
           </Link>
-          <Link as={NextLink} href="/admin/read_notes" _hover={{ textDecoration: "underline" }}>
-            Mis Notas
-          </Link>
-          <Link as={NextLink} href="/admin/calendar" _hover={{ textDecoration: "underline" }}>
-            Mi Calendario
+          <Link as={NextLink} href="/admin/emails" _hover={{ textDecoration: "underline" }}>
+            Plantillas de Email
           </Link>
           <Link as={NextLink} href="/admin/reportes" _hover={{ textDecoration: "underline" }}>
             Reportes
           </Link>
-          <Link as={NextLink} href="/admin/emails" _hover={{ textDecoration: "underline" }}>
-            Emails
-          </Link>
+          
 
           {/* Botón para cerrar sesión */}
           <Button colorScheme="red" size="sm" w="100%" mt={4} onClick={() => signOut()}>

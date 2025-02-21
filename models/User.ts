@@ -21,7 +21,6 @@ export interface IUser extends Document {
   individualProgram?: boolean;
   nextSessionDate?: string | null;
   provider?: string;
-  // Nuevo campo para relacionar con Subscription (opcional, si ya planeas implementarlo):
   activeSubscription?: Types.ObjectId;
 }
 
@@ -46,7 +45,6 @@ const UserSchema = new Schema<IUser>({
   individualProgram: { type: Boolean, default: false },
   nextSessionDate: { type: String, default: null },
   provider: { type: String },
-  // Campo opcional para un "puntero" a la suscripción principal
   activeSubscription: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "Subscription",

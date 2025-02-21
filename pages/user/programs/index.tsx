@@ -14,32 +14,39 @@ import {
 } from "@chakra-ui/react";
 import PayButton from "@/components/ui/PayButton"; // Asegúrate de que este componente existe
 
+type ProgramType = {
+  _id: string;
+  name: string;
+  description: string;
+  groupLevel: "Fundamental" | "Avanzado" | "VIP";
+  price: number;
+  paymentType: "subscription" | "one-time";
+};
+
 export default function UserPrograms() {
   const { data: session, status } = useSession();
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(true);
-  const [programs, setPrograms] = useState<
-    { id: number; name: string; price: number; description: string }[]
-  >([]);
+  const [programs, setPrograms] = useState<ProgramType[]>([]);
 
   useEffect(() => {
     if (status === "loading") return;
     if (!session) {
       router.push("/login");
+      return;
     }
-  }, [session, status, router]);
 
-  useEffect(() => {
-    // Simulación de carga de datos (esto se reemplazará con una API real)
-    setTimeout(() => {
-      setPrograms([
-        { id: 1, name: "MMS Fundamental", price: 250, description: "Nuestro programa principal de un año." },
-        { id: 2, name: "MMS Avanzado", price: 150, description: "Programa de seguimiento con 1 sesión semanal." },
-        { id: 3, name: "MMS VIP", price: 90, description: "Programa exclusivo con 1 sesión al mes." },
-      ]);
-      setIsLoading(false);
-    }, 1500);
-  }, []);
+    // Obtener los programas del usuario autenticado desde la nueva API
+    fetch("/api/user/programs")
+      .then((res) => res.json())
+      .then((data) => {
+        setPrograms(data);
+        setIsLoading(false);
+      })
+      .catch(() => {
+        setIsLoading(false);
+      });
+  }, [session, status, router]);
 
   if (status === "loading") {
     return <Text textAlign="center">Cargando...</Text>;
@@ -48,7 +55,7 @@ export default function UserPrograms() {
   return (
     <Container maxW="container.lg" py={10}>
       <Heading as="h1" size="xl" textAlign="center" mb={6} color="teal.500">
-        Mis Programas
+        Programas Disponibles
       </Heading>
 
       <SimpleGrid columns={{ base: 1, md: 2, lg: 3 }} spacing={6}>
@@ -56,8 +63,8 @@ export default function UserPrograms() {
           ? Array.from({ length: 3 }).map((_, index) => (
               <Skeleton key={index} height="200px" borderRadius="lg" />
             ))
-          : programs.map((program) => (
-              <Card key={program.id} borderWidth="1px" borderRadius="lg" p={4} boxShadow="md">
+          : programs.length > 0 ? programs.map((program) => (
+              <Card key={program._id} borderWidth="1px" borderRadius="lg" p={4} boxShadow="md">
                 <CardBody>
                   <Heading size="md" mb={2} color="teal.600">
                     {program.name}
@@ -66,12 +73,16 @@ export default function UserPrograms() {
                     {program.description}
                   </Text>
                   <Text fontWeight="bold" color="teal.700">
-                    {program.price}
+                    {program.price}€
                   </Text>
                   <PayButton name={program.name} price={program.price} />
-                  </CardBody>
+                </CardBody>
               </Card>
-            ))}
+            )) : (
+              <Text textAlign="center" color="gray.500">
+                No hay programas disponibles para tu nivel.
+              </Text>
+            )}
       </SimpleGrid>
     </Container>
   );

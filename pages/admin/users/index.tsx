@@ -21,13 +21,15 @@ import {
 import { IUser } from "../../../models/User";
 
 export default function UsersPage() {
-
-
   const [users, setUsers] = useState<IUser[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
   const [filteredUsers, setFilteredUsers] = useState<IUser[]>([]);
+  const [sortField, setSortField] = useState<string | null>(null);
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
+  const [roleFilter, setRoleFilter] = useState<string | null>(null);
+  const [patientFilter, setPatientFilter] = useState<boolean | null>(null);
 
   useEffect(() => {
     const fetchUsers = async () => {
@@ -52,32 +54,83 @@ export default function UsersPage() {
   }, []);
 
   useEffect(() => {
-    const filtered = users.filter(user =>
+    let filtered = users.filter(user =>
       user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      user.surname?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
       user.role?.toLowerCase().includes(searchTerm.toLowerCase())
-
     );
+
+    if (roleFilter) {
+      filtered = filtered.filter(user => user.role === roleFilter);
+    }
+
+    if (patientFilter !== null) {
+      filtered = filtered.filter(user => user.isPatient === patientFilter);
+    }
+
     setFilteredUsers(filtered);
-  }, [searchTerm, users]);
+  }, [searchTerm, users, roleFilter, patientFilter]);
+
+  // 📌 Función para ordenar usuarios
+  const handleSort = (field: keyof IUser) => {
+    if (field === "role") {
+      // Si se hace click en la columna de "Rol", aplicar filtrado en lugar de ordenación
+      const newFilter = roleFilter === "user" ? "admin" : roleFilter === "admin" ? "therapist" : roleFilter === "therapist" ? null : "user";
+      setRoleFilter(newFilter);
+      
+      return;
+    }
+
+    if (field === "isPatient") {
+      // Si se hace click en la columna de "Paciente", aplicar filtrado en lugar de ordenación
+      const newFilter = patientFilter === true ? false : patientFilter === false ? null : true;
+      setPatientFilter(newFilter);
+
+      return;
+    } 
+
+    const order = sortField === field && sortOrder === "asc" ? "desc" : "asc";
+    setSortField(field);
+    setSortOrder(order);
+
+    const sortedUsers = [...filteredUsers].sort((a, b) => {
+      let valueA: string | number | boolean | Date = a[field] ?? "";
+      let valueB: string | number | boolean | Date = b[field] ?? "";
+    
+      // 📌 Asegurar que `createdAt` se ordena correctamente como fecha
+      if (field === "createdAt") {
+        valueA = a.createdAt ? new Date(a.createdAt) : 0;
+        valueB = b.createdAt ? new Date(b.createdAt) : 0;
+      }
+    
+      if (valueA < valueB) return order === "asc" ? -1 : 1;
+      if (valueA > valueB) return order === "asc" ? 1 : -1;
+      return 0;
+    });
+    
+
+    setFilteredUsers(sortedUsers);
+  };
 
   return (
-    <Box p={6}>
-      <Flex justify="space-between" mb={4}>
-      <Heading size="lg" mb={4}>Lista de Usuarios</Heading>
-      <Input
-        type="text"
-        placeholder="Buscar usuario por nombre/mail/rol"
-        value={searchTerm}
-        onChange={(e) => setSearchTerm(e.target.value)}
-        border="1px solid #CBD5E0"
-        borderRadius="md"
-        p={2}
-        w="auto"
-        mr={4}
-      />
+    <Box p={6} maxW="80vw" margin="0 auto">
+      {/* Encabezado y Búsqueda */}
+      <Flex justify="space-between" align="center" mb={4}>
+        <Heading size="lg">Lista de Usuarios</Heading>
+        <Input
+          type="text"
+          placeholder="Buscar usuario por nombre/mail/rol"
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          border="1px solid #CBD5E0"
+          borderRadius="md"
+          p={2}
+          w="300px"
+        />
       </Flex>
 
+      {/* Carga y Errores */}
       {loading && <Spinner size="xl" />}
       {error && (
         <Alert status="error">
@@ -86,30 +139,48 @@ export default function UsersPage() {
         </Alert>
       )}
 
+      {/* Tabla de Usuarios */}
       {!loading && !error && (
-        <TableContainer>
-          <Table variant="simple">
+        <TableContainer maxW="100%" overflowX="auto">
+          <Table variant="simple" size="sm">
             <Thead>
               <Tr>
-                <Th>Nombre</Th>
-                <Th>Email</Th>
-                <Th>Rol</Th>
-                <Th>Fecha de Registro</Th>
+                <Th onClick={() => handleSort("name")} cursor="pointer">
+                  Nombre {sortField === "name" ? (sortOrder === "asc" ? "⬆️" : "⬇️") : ""}
+                </Th>
+                <Th onClick={() => handleSort("surname")} cursor="pointer">
+                  Apellido {sortField === "surname" ? (sortOrder === "asc" ? "⬆️" : "⬇️") : ""}
+                </Th>
+                <Th onClick={() => handleSort("email")} cursor="pointer">
+                  Email {sortField === "email" ? (sortOrder === "asc" ? "⬆️" : "⬇️") : ""}
+                </Th>
+                <Th onClick={() => handleSort("isPatient")} cursor="pointer">
+                  Paciente {patientFilter ? `(${patientFilter})` : ""}
+                </Th>
+                <Th onClick={() => handleSort("role")} cursor="pointer">
+                  Rol {roleFilter ? `(${roleFilter})` : ""}
+                </Th>
+                <Th onClick={() => handleSort("createdAt")} cursor="pointer">
+                  Fecha de Registro {sortField === "createdAt" ? (sortOrder === "asc" ? "⬆️" : "⬇️") : ""}
+                </Th>
+                <Th></Th>
               </Tr>
             </Thead>
             <Tbody>
               {filteredUsers.map((user) => (
                 <Tr key={String(user._id)}>
                   <Td>{user.name || "Sin nombre"}</Td>
+                  <Td>{user.surname || "Sin Apellido"}</Td>
                   <Td>{user.email}</Td>
+                  <Td>{user.isPatient ? "Si" : "No"}</Td>
                   <Td>{user.role}</Td>
-                  <Td>{user.createdAt ? new Date(user.createdAt).toLocaleDateString() : "Fecha no disponible"}</Td>
+                  <Td>{user.createdAt ? new Date(user.createdAt).toLocaleDateString() : "No disponible"}</Td>
                   <Td>
-                    <Link href={`/admin/users/${user._id}`} style={{ color: "#3182CE", textDecoration: "underline" }}>
+                    <Link href={`/admin/users/${user._id}`} color="blue.500" textDecoration="underline">
                       Ver detalles
                     </Link>
                   </Td>
-                  </Tr>
+                </Tr>
               ))}
             </Tbody>
           </Table>
