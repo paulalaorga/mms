@@ -1,5 +1,5 @@
 
-import Navbar from "../src/components/layout/Navbar";
+import Navbar from "@/components/layout/Navbar";
 import CallToAction from "@/components/layout/CallToAction";
 import Hero1 from "./home/Hero1";
 import Hero2 from "./home/Hero2";

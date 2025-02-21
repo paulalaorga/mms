@@ -1,8 +1,8 @@
 import { NextApiRequest, NextApiResponse } from "next";
 import { v4 as uuidv4 } from "uuid";
-import { sendConfirmationEmail } from "@/utils/email";
-import User from "@/models/User";
-import connectDB from "@/lib/mongodb";
+import { sendConfirmationEmail } from "../../utils/email";
+import User from "../../models/User";
+import connectDB from "../../lib/mongodb";
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method === "POST") {

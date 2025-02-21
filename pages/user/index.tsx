@@ -13,8 +13,8 @@ import {
   AlertIcon,
   Box,
 } from "@chakra-ui/react";
-import { IUser } from "@/models/User";
-import UserLayout from "../../src/components/layout/UserLayout";
+import { IUser } from "../../models/User";
+import UserLayout from "@/components/layout/UserLayout";
 import ProfileProgress from "./profile/ProfileProgress";
 
 export default function UserDashboard() {

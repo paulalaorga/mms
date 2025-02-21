@@ -1,6 +1,6 @@
 import { NextApiRequest, NextApiResponse } from "next";
-import connectDB from "@/lib/mongodb";
-import User from "@/models/User";
+import connectDB from "../../../lib/mongodb";
+import User from "../../../models/User";
 import crypto from "crypto";
 import nodemailer from "nodemailer";
 

@@ -1,6 +1,6 @@
 import mongoose from "mongoose";
 import "dotenv/config";
-import EmailSettings from "../src/models/EmailSettings";
+import EmailSettings from "../models/EmailSettings";
 
 async function setup() {
   console.log("📌 Conectando a MongoDB...");

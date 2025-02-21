@@ -18,7 +18,7 @@ import {
   Flex,
   Input,
 } from "@chakra-ui/react";
-import { IUser } from "@/models/User";
+import { IUser } from "../../../models/User";
 
 export default function UsersPage() {
 

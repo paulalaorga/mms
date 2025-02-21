@@ -1,5 +1,5 @@
 import mongoose from "mongoose";
-import User from "./src/models/User"; // Asegúrate de que el path sea correcto
+import User from "./models/User"; // Asegúrate de que el path sea correcto
 
 const MONGO_URI = "mongodb+srv://admin:CwyFhBjjryHoka5I@cluster0.6bg05.mongodb.net/sample_mflix?retryWrites=true&w=majority";
 

@@ -1,7 +1,6 @@
 import { NextApiRequest, NextApiResponse } from "next";
 import axios from "axios";
 
-// Definimos la estructura esperada de la respuesta de PAYCOMET
 interface PaycometResponse {
   errorCode: number;
   challengeUrl?: string;
@@ -14,45 +13,60 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   try {
     const { amount, order } = req.body;
+
     if (!amount || !order) {
+      console.error("❌ Error: Faltan parámetros obligatorios", { amount, order });
       return res.status(400).json({ error: "Faltan parámetros obligatorios" });
     }
 
     const PAYCOMET_API_KEY = process.env.PAYCOMET_API_KEY;
-    const PAYCOMET_TERMINAL_ID = process.env.PAYCOMET_TERMINAL_ID;
+    const PAYCOMET_TERMINAL = process.env.PAYCOMET_TERMINAL;
 
-    // Enviamos la solicitud a PAYCOMET con el tipo de respuesta definido
+    if (!PAYCOMET_API_KEY || !PAYCOMET_TERMINAL) {
+      console.error("❌ Error: PAYCOMET_API_KEY o PAYCOMET_TERMINAL no están definidos");
+      return res.status(500).json({ error: "Configuración de Paycomet incorrecta" });
+    }
+
+    console.log("📢 Enviando solicitud a PAYCOMET:", { amount, order });
+
     const response = await axios.post<PaycometResponse>(
-      "https://rest.paycomet.com/v1/form",
+      "https://rest.paycomet.com/v1/payments",
       {
-        operationType: "1",
+        terminal: PAYCOMET_TERMINAL,
+        order,
+        methods: [1],
+        amount: `${amount}`,
+        currency: "EUR",
+        originalIp: req.headers["x-forwarded-for"] || "127.0.0.1",
+        productDescription: "Pago en nuestra plataforma",
+        secure: "1",
         language: "es",
-        terminal: PAYCOMET_TERMINAL_ID,
-        payment: {
-          terminal: PAYCOMET_TERMINAL_ID,
-          order,
-          methods: [1],
-          amount: `${amount}`, // PAYCOMET requiere string
-          currency: "EUR",
-          originalIp: req.headers["x-forwarded-for"] || "127.0.0.1",
-          productDescription: "Pago en nuestra plataforma",
-          secure: "1",
-          language: "es",
-        }
+        subscription: {
+          periodicity: "monthly",
+          duration: 12,
+        },
       },
       {
-        headers: { "PAYCOMET-API-TOKEN": PAYCOMET_API_KEY }
+        headers: { "PAYCOMET-API-TOKEN": PAYCOMET_API_KEY },
       }
     );
 
-    // Ahora TypeScript reconocerá que `response.data` tiene la estructura de `PaycometResponse`
+    console.log("🔄 Respuesta de PAYCOMET:", response.data);
+
     if (response.data.errorCode === 0 && response.data.challengeUrl) {
       return res.status(200).json({ challengeUrl: response.data.challengeUrl });
     } else {
+      console.error("❌ Error en PAYCOMET:", response.data);
       return res.status(500).json({ error: `Error en PAYCOMET: ${response.data.errorCode}` });
     }
-  } catch (error) {
-    console.error("Error en PAYCOMET:", error);
-    return res.status(500).json({ error: "Error en la pasarela de pago" });
+  } catch (err) {
+    const error = err as Error; // 🔹 Hacemos un cast explícito a Error
+
+    console.error("❌ Error en la API de Paycomet:", error.message);
+
+    return res.status(500).json({
+      error: "Error en la pasarela de pago",
+      details: error.message,
+    });
   }
 }

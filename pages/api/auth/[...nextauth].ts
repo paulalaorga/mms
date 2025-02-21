@@ -1,8 +1,8 @@
 import NextAuth, { AuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import GoogleProvider from "next-auth/providers/google";
-import connectDB from "@/lib/mongodb";
-import User from "@/models/User";
+import connectDB from "../../../lib/mongodb";
+import User from "../../../models/User";
 import { NextApiRequest, NextApiResponse } from "next";
 
 export const config = {

@@ -2,7 +2,7 @@ import type { NextApiRequest, NextApiResponse } from "next";
 import axios from "axios";
 
 const PAYCOMET_BASE_URL = process.env.PAYCOMET_BASE_URL;
-const PAYCOMET_TERMINAL_ID = process.env.PAYCOMET_TERMINAL_ID;
+const PAYCOMET_TERMINAL = process.env.PAYCOMET_TERMINAL;
 const PAYCOMET_PASSWORD = process.env.PAYCOMET_PASSWORD;
 const PAYCOMET_MERCHANT_CODE = process.env.PAYCOMET_MERCHANT_CODE;
 const PAYCOMET_URL_OK = process.env.PAYCOMET_URL_OK;
@@ -24,7 +24,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     console.log("💳 Monto:", amount);
     console.log("🆔 Order ID:", orderId);
     console.log("📡 URL Base:", PAYCOMET_BASE_URL);
-    console.log("🔑 Terminal ID:", PAYCOMET_TERMINAL_ID);
+    console.log("🔑 Terminal ID:", PAYCOMET_TERMINAL);
     console.log("🔑 Merchant Code:", PAYCOMET_MERCHANT_CODE);
     console.log("🔑 Password:", PAYCOMET_PASSWORD ? "Cargada ✅" : "No encontrada ❌");
 
@@ -32,7 +32,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const response = await axios.post(
       `${PAYCOMET_BASE_URL}/payments`,
       {
-        terminal: PAYCOMET_TERMINAL_ID,
+        terminal: PAYCOMET_TERMINAL,
         merchant: PAYCOMET_MERCHANT_CODE,
         amount: amount * 100, // Paycomet usa valores en céntimos
         order: orderId,
@@ -44,7 +44,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       {
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Basic ${Buffer.from(`${PAYCOMET_TERMINAL_ID}:${PAYCOMET_PASSWORD}`).toString("base64")}`,
+          Authorization: `Basic ${Buffer.from(`${PAYCOMET_TERMINAL}:${PAYCOMET_PASSWORD}`).toString("base64")}`,
         },
       }
     );

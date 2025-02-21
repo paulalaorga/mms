@@ -8,7 +8,7 @@ import {
   Box
 } from "@chakra-ui/react";
 import Image from "next/image";
-import Logo from "../../../public/MMS.svg";
+import Logo from "@/public/MMS.svg";
 
 export default function Footer() {
   const tiktok = "/tiktok.svg";

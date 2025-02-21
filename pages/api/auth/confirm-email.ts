@@ -1,5 +1,5 @@
-import User from "@/models/User";
-import connectDB from "@/lib/mongodb";
+import User from "../../../models/User";
+import connectDB from "../../../lib/mongodb";
 import type { NextApiRequest, NextApiResponse } from "next";
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {

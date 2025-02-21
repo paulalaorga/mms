@@ -12,7 +12,7 @@ import {
   Button,
 } from "@chakra-ui/react";
 
-import Navbar from "../src/components/layout/Navbar";
+import Navbar from "@/components/layout/Navbar";
 import NextLink from "next/link";
 import { signIn, getSession } from "next-auth/react";
 import { FaGoogle } from "react-icons/fa";

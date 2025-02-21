@@ -2,22 +2,25 @@
 
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import {
-  Box,
   Container,
   Heading,
   Text,
-  VStack,
   SimpleGrid,
   Card,
   CardBody,
+  Skeleton,
 } from "@chakra-ui/react";
-import PayButton from "@/components/ui/PayButton";
+import PayButton from "@/components/ui/PayButton"; // Asegúrate de que este componente existe
 
 export default function UserPrograms() {
   const { data: session, status } = useSession();
   const router = useRouter();
+  const [isLoading, setIsLoading] = useState(true);
+  const [programs, setPrograms] = useState<
+    { id: number; name: string; price: number; description: string }[]
+  >([]);
 
   useEffect(() => {
     if (status === "loading") return;
@@ -26,43 +29,50 @@ export default function UserPrograms() {
     }
   }, [session, status, router]);
 
+  useEffect(() => {
+    // Simulación de carga de datos (esto se reemplazará con una API real)
+    setTimeout(() => {
+      setPrograms([
+        { id: 1, name: "MMS Fundamental", price: 250, description: "Nuestro programa principal de un año." },
+        { id: 2, name: "MMS Avanzado", price: 150, description: "Programa de seguimiento con 1 sesión semanal." },
+        { id: 3, name: "MMS VIP", price: 90, description: "Programa exclusivo con 1 sesión al mes." },
+      ]);
+      setIsLoading(false);
+    }, 1500);
+  }, []);
+
   if (status === "loading") {
-    return <Text>Cargando...</Text>;
+    return <Text textAlign="center">Cargando...</Text>;
   }
 
-  // Simulación de productos
-  const products = [
-    { id: 1, name: "Plan Básico", price: "10€", description: "Acceso limitado a contenido" },
-    { id: 2, name: "Plan Estándar", price: "20€", description: "Acceso a todo el contenido" },
-    { id: 3, name: "Plan Premium", price: "30€", description: "Beneficios exclusivos y soporte prioritario" },
-  ];
-
-  const handlePurchase = (productId: number) => {
-    alert(`Redirigiendo al pago del producto ${productId}`);
-    // Aquí podrías redirigir a una pasarela de pago (Stripe, PayPal, etc.)
-  };
-
   return (
-    <Container centerContent py={10}>
-      <Box p={6} borderWidth={1} borderRadius="lg" boxShadow="lg" w="100%" maxW="md">
-        <VStack spacing={4}>
-          <Heading size="lg">Opciones de Compra</Heading>
-          <Text>Elige el plan que mejor se adapte a tus necesidades.</Text>
+    <Container maxW="container.lg" py={10}>
+      <Heading as="h1" size="xl" textAlign="center" mb={6} color="teal.500">
+        Mis Programas
+      </Heading>
 
-          <SimpleGrid columns={1} spacing={4} w="100%">
-            {products.map((product) => (
-              <Card key={product.id} borderWidth={1} p={4}>
+      <SimpleGrid columns={{ base: 1, md: 2, lg: 3 }} spacing={6}>
+        {isLoading
+          ? Array.from({ length: 3 }).map((_, index) => (
+              <Skeleton key={index} height="200px" borderRadius="lg" />
+            ))
+          : programs.map((program) => (
+              <Card key={program.id} borderWidth="1px" borderRadius="lg" p={4} boxShadow="md">
                 <CardBody>
-                  <Heading size="md">{product.name}</Heading>
-                  <Text>{product.description}</Text>
-                  <Text fontWeight="bold" mt={2}>{product.price}</Text>
-                  <PayButton />
-                </CardBody>
+                  <Heading size="md" mb={2} color="teal.600">
+                    {program.name}
+                  </Heading>
+                  <Text fontSize="sm" mb={3} color="gray.600">
+                    {program.description}
+                  </Text>
+                  <Text fontWeight="bold" color="teal.700">
+                    {program.price}
+                  </Text>
+                  <PayButton name={program.name} price={program.price} />
+                  </CardBody>
               </Card>
             ))}
-          </SimpleGrid>
-        </VStack>
-      </Box>
+      </SimpleGrid>
     </Container>
   );
 }

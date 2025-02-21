@@ -1,6 +1,12 @@
 import { useState } from "react";
+import { Button } from "@chakra-ui/react";
 
-const PayButton = () => {
+interface PayButtonProps {
+  name: string;
+  price: number;
+}
+
+const PayButton: React.FC<PayButtonProps> = ({ name, price }) => {
   const [loading, setLoading] = useState(false);
 
   const handlePayment = async () => {
@@ -10,10 +16,14 @@ const PayButton = () => {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          amount: 50, // Precio en euros
+          amount: price, // Precio en euros
           currency: "EUR",
           order: `ORDER_${Date.now()}`,
-          description: "Sesión de terapia",
+          description: `Suscripción a ${name}`,
+          subscription: {
+            periodicity: "monthly", // Pago mensual
+            duration: 12, // 12 meses
+          },
         }),
       });
 
@@ -33,9 +43,16 @@ const PayButton = () => {
   };
 
   return (
-    <button onClick={handlePayment} disabled={loading}>
-      {loading ? "Procesando..." : "Pagar con Paycomet"}
-    </button>
+    <Button
+      onClick={handlePayment}
+      isLoading={loading}
+      colorScheme="teal"
+      size="md"
+      width="100%"
+      mt={4}
+    >
+      Suscribirse por {price}€/mes
+    </Button>
   );
 };
 
