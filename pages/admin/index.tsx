@@ -4,7 +4,7 @@ import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { Heading, Text, Spinner, Container, VStack } from "@chakra-ui/react";
-import AdminLayout from "../../src/components/layout/AdminLayout";
+import AdminLayout from "@/components/layout/AdminLayout";
 
 export default function AdminPage() {
   const { data: session, status } = useSession();
