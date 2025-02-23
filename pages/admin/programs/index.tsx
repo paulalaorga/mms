@@ -21,28 +21,36 @@ import {
 type PaymentType = "subscription" | "one-time";
 type GroupLevel = "Fundamental" | "Avanzado" | "VIP";
 
+type PricingOption = {
+  period: "monthly" | "yearly" | "weekly";
+  price: number | null; // ✅ Ahora permite `null`
+  billingCycles?: number | null;
+};
+
 type ProgramType = {
   _id?: string;
   name: string;
   description: string;
   groupLevel: GroupLevel;
-  price?: number | undefined; // ✅ Ahora permite `undefined`, pero no `null`
   paymentType: PaymentType;
   billingFrequency?: number | undefined; // ✅ Ahora permite `undefined`, pero no `null`
   billingCycles?: number | undefined;
+  pricingOptions?: PricingOption[];
 };
 
 export default function AdminPrograms() {
-  const [programs, setPrograms] = useState<ProgramType[]>([]);
+  const [programs, setPrograms] = useState<
+    (ProgramType & { userCount?: number })[]
+  >([]);
   const [form, setForm] = useState<ProgramType>({
     name: "",
     description: "",
     groupLevel: "Fundamental",
-    price: undefined, // ✅ Usamos `undefined` en lugar de `null`
     paymentType: "subscription",
     billingFrequency: undefined, // ✅ Usamos `undefined` en lugar de `null`
     billingCycles: undefined,
   });
+  const [pricingOptions, setPricingOptions] = useState<PricingOption[]>([]);
 
   const [isEditing, setIsEditing] = useState(false);
   const toast = useToast();
@@ -73,10 +81,12 @@ export default function AdminPrograms() {
       name: form.name,
       description: form.description,
       groupLevel: form.groupLevel,
-      price: form.price !== undefined ? form.price : 0,
       paymentType: form.paymentType,
-      billingFrequency: form.billingFrequency !== undefined ? form.billingFrequency : null,
-      billingCycles: form.billingCycles !== undefined ? form.billingCycles : null,
+      billingFrequency:
+        form.billingFrequency !== undefined ? form.billingFrequency : null,
+      billingCycles:
+        form.billingCycles !== undefined ? form.billingCycles : null,
+      pricingOptions: pricingOptions, // <-- Se añade este campo
     });
   
     console.log("🔍 Enviando datos a la API:", body);
@@ -99,19 +109,24 @@ export default function AdminPrograms() {
         name: "",
         description: "",
         groupLevel: "Fundamental",
-        price: undefined,
         paymentType: "subscription",
         billingFrequency: undefined,
         billingCycles: undefined,
       });
+      // Limpiar también las opciones de precio
+      setPricingOptions([]);
       fetch("/api/admin/programs")
         .then((res) => res.json())
         .then(setPrograms);
     } else {
       console.error("❌ Error en la API:", response.status, responseData);
-      toast({ title: `Error al guardar: ${responseData?.error || "Desconocido"}`, status: "error" });
+      toast({
+        title: `Error al guardar: ${responseData?.error || "Desconocido"}`,
+        status: "error",
+      });
     }
-  };  
+  };
+  
 
   const handleEdit = (program: ProgramType) => {
     setForm(program);
@@ -150,7 +165,7 @@ export default function AdminPrograms() {
           onChange={handleInputChange}
         />
 
-        <FormLabel>Nivel de Grupos</FormLabel>
+        <FormLabel>Nivel de Grupos de Terapia</FormLabel>
         <Select
           name="groupLevel"
           value={form.groupLevel}
@@ -161,55 +176,59 @@ export default function AdminPrograms() {
           <option value="VIP">VIP</option>
         </Select>
 
-        <FormLabel>Tipo de Pago</FormLabel>
-        <Select
-          name="paymentType"
-          value={form.paymentType}
-          onChange={handleInputChange}
-        >
-          <option value="subscription">Suscripción</option>
-          <option value="one-time">Pago Único</option>
-        </Select>
+        <Stack spacing={4} mb={6}>
+          <Heading size="md">Opciones de Precio</Heading>
 
-        {/* Sección de Precio */}
-        <>
-          <FormLabel>Precio (€)</FormLabel>
-          <Input
-            type="number"
-            name="price"
-            value={form.price !== undefined ? form.price : ""}
-            onChange={handleInputChange}
-          />
-        </>
+          {pricingOptions.map((option, index) => (
+            <Stack key={index} direction="row" align="center">
+              <Select
+                value={option.period}
+                onChange={(e) => {
+                  const newOptions = [...pricingOptions];
+                  newOptions[index].period = e.target.value as
+                    | "monthly"
+                    | "yearly";
+                  setPricingOptions(newOptions);
+                }}
+              >
+                <option value="monthly">Mensual</option>
+                <option value="yearly">Pago Único</option>
+                <option value="weekly">Semanal</option>
+              </Select>
+              <Input
+                type="number"
+                placeholder="Precio (€)"
+                value={option.price ?? ""}
+                onChange={(e) => {
+                  const newOptions = [...pricingOptions];
+                  newOptions[index].price = Number(e.target.value);
+                  setPricingOptions(newOptions);
+                }}
+              />
+              <Input
+                type="number"
+                placeholder="Ciclos de Facturación"
+                value={option.billingCycles ?? ""}
+                onChange={(e) => {
+                  const newOptions = [...pricingOptions];
+                  newOptions[index].billingCycles = Number(e.target.value);
+                  setPricingOptions(newOptions);
+                }}
+              />
+            </Stack>
+          ))}
 
-        {/* Solo se muestra si es suscripción */}
-        {form.paymentType === "subscription" && (
-          <>
-            <FormLabel>Frecuencia de Facturación</FormLabel>
-            <Select
-              name="billingFrequency"
-              value={
-                form.billingFrequency !== undefined ? form.billingFrequency : ""
-              }
-              onChange={handleInputChange}
-            >
-              <option value="" disabled>
-                Selecciona una opción
-              </option>
-              <option value="weekly">Semanal</option>
-              <option value="monthly">Mensual</option>
-              <option value="yearly">Anual</option>
-            </Select>
-
-            <FormLabel>Número de Pagos</FormLabel>
-            <Input
-              type="number"
-              name="billingCycles"
-              value={form.billingCycles !== undefined ? form.billingCycles : ""}
-              onChange={handleInputChange}
-            />
-          </>
-        )}
+          <Button
+            onClick={() =>
+              setPricingOptions([
+                ...pricingOptions,
+                { period: "monthly", price: null }, // Valor inicial
+              ])
+            }
+          >
+            Agregar Opción de Precio
+          </Button>
+        </Stack>
 
         <Button colorScheme="teal" onClick={handleSubmit}>
           {isEditing ? "Actualizar Programa" : "Crear Programa"}
@@ -217,44 +236,68 @@ export default function AdminPrograms() {
       </Stack>
 
       <Table variant="simple">
-        <Thead>
-          <Tr>
-            <Th>Nombre</Th>
-            <Th>Nivel</Th>
-            <Th>Precio</Th>
-            <Th>Acciones</Th>
-          </Tr>
-        </Thead>
-        <Tbody>
-          {programs?.length > 0 ? (
-            programs.map((program) => (
-              <Tr key={program._id}>
-                <Td>{program.name}</Td>
-                <Td>{program.groupLevel}</Td>
-                <Td>{program.price}€</Td>
-                <Td>
-                  <Button size="sm" onClick={() => handleEdit(program)}>
-                    Editar
-                  </Button>
-                  <Button
-                    size="sm"
-                    colorScheme="red"
-                    onClick={() => handleDelete(program._id!)}
-                  >
-                    Eliminar
-                  </Button>
-                </Td>
-              </Tr>
-            ))
-          ) : (
-            <Tr>
-              <Td colSpan={4} style={{ textAlign: "center", padding: "20px" }}>
-                No hay programas disponibles.
-              </Td>
-            </Tr>
-          )}
-        </Tbody>
-      </Table>
+  <Thead>
+    <Tr>
+      <Th>Nombre</Th>
+      <Th>Nivel de Terapia</Th>
+      <Th>Opciones de Pago</Th>
+      <Th>Usuarios Activos</Th>
+      <Th></Th>
+    </Tr>
+  </Thead>
+  <Tbody>
+    {programs?.length > 0 ? (
+      programs.map((program) => (
+        <Tr key={program._id}>
+          <Td>{program.name}</Td>
+          <Td>{program.groupLevel}</Td>
+          <Td>
+                {program.pricingOptions && program.pricingOptions.length > 0 ? (
+                  program.pricingOptions.map((option, index) => (
+                    <div key={index}>
+                      <strong>
+                        {option.period === "monthly"
+                          ? "Mensual"
+                          : option.period === "yearly"
+                          ? "Anual"
+                          : option.period === "weekly"
+                          ? "Semanal"
+                          : option.period}
+                        :
+                      </strong>{" "}
+                      {option.price}€
+                    </div>
+                  ))
+                ) : (
+                  <div>No hay opciones de suscripción configuradas</div>
+            )}
+          </Td>
+
+          <Td>{program.userCount || 0}</Td>
+          <Td>
+            <Button size="sm" onClick={() => handleEdit(program)}>
+              Editar
+            </Button>
+            <Button
+              size="sm"
+              colorScheme="red"
+              onClick={() => handleDelete(program._id!)}
+            >
+              Eliminar
+            </Button>
+          </Td>
+        </Tr>
+      ))
+    ) : (
+      <Tr>
+        <Td colSpan={5} style={{ textAlign: "center", padding: "20px" }}>
+          No hay programas disponibles.
+        </Td>
+      </Tr>
+    )}
+  </Tbody>
+</Table>
+
     </Container>
   );
 }

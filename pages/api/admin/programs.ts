@@ -7,22 +7,34 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   try {
     if (req.method === "POST") {
-      const { name, description, groupLevel, price, paymentType, billingFrequency, billingCycles } = req.body;
+      const {
+        name,
+        description,
+        groupLevel,
+        paymentType,
+        billingFrequency,
+        billingCycles,
+        pricingOptions, // Se espera solo este campo para los precios
+      } = req.body;
 
-      // 🔍 Validaciones antes de guardar
-      if (!name || !description || !groupLevel || price === undefined || !paymentType) {
+      // Validaciones básicas
+      if (!name || !description || !groupLevel || !paymentType) {
         console.error("❌ Datos inválidos recibidos:", req.body);
-        return res.status(400).json({ error: "Todos los campos son obligatorios." });
+        return res.status(400).json({ error: "Todos los campos obligatorios deben estar presentes." });
       }
+
+      // Para pago único, podrías validar que pricingOptions contenga la opción correcta,
+      // por ejemplo, que exista una opción con period "yearly" o alguna otra convención.
+      // Esto depende de tu lógica de negocio.
 
       const newProgram = new Program({
         name,
         description,
         groupLevel,
-        price,
         paymentType,
-        billingFrequency: billingFrequency ?? null, // ✅ Opcional
-        billingCycles: billingCycles ?? null, // ✅ Opcional
+        billingFrequency: billingFrequency ?? null,
+        billingCycles: billingCycles ?? null,
+        pricingOptions: pricingOptions ?? [],
       });
 
       await newProgram.save();
@@ -31,7 +43,20 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     if (req.method === "GET") {
       const programs = await Program.find({});
+      console.log("Programas obtenidos:", programs);
       return res.status(200).json(programs);
+    }
+
+    if (req.method === "DELETE") {
+      const { id } = req.body;
+      if (!id) {
+        return res.status(400).json({ error: "El ID del programa es obligatorio." });
+      }
+      const deletedProgram = await Program.findByIdAndDelete(id);
+      if (!deletedProgram) {
+        return res.status(404).json({ error: "Programa no encontrado." });
+      }
+      return res.status(200).json({ message: "Programa eliminado correctamente." });
     }
 
     return res.status(405).json({ error: "Método no permitido" });

@@ -11,16 +11,28 @@ import {
   Card,
   CardBody,
   Skeleton,
+  Stack,
+  Divider,
 } from "@chakra-ui/react";
 import PayButton from "@/components/ui/PayButton"; // Asegúrate de que este componente existe
+
+type PricingOption = {
+  period: "monthly" | "yearly" | "weekly";
+  price: number;
+  billingCycles?: number;
+};
 
 type ProgramType = {
   _id: string;
   name: string;
   description: string;
   groupLevel: "Fundamental" | "Avanzado" | "VIP";
-  price: number;
   paymentType: "subscription" | "one-time";
+  pricingOptions: PricingOption[];
+  subscriptionDetails?: {
+    periodicity: "monthly" | "weekly" | "yearly";
+    duration: number;
+  };
 };
 
 export default function UserPrograms() {
@@ -28,6 +40,7 @@ export default function UserPrograms() {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(true);
   const [programs, setPrograms] = useState<ProgramType[]>([]);
+  const [userLevel, setUserLevel] = useState<string>("");
 
   useEffect(() => {
     if (status === "loading") return;
@@ -36,16 +49,22 @@ export default function UserPrograms() {
       return;
     }
 
-    // Obtener los programas del usuario autenticado desde la nueva API
     fetch("/api/user/programs")
       .then((res) => res.json())
       .then((data) => {
-        setPrograms(data);
+        if (data.error) {
+          console.error("❌ Error al cargar programas:", data.error);
+          setPrograms([]);
+        } else {
+          setPrograms(data);
+        }
         setIsLoading(false);
       })
-      .catch(() => {
-        setIsLoading(false);
-      });
+      .catch(() => setIsLoading(false));
+
+    if (session.user.groupLevel) {
+      setUserLevel(session.user.groupLevel);
+    }
   }, [session, status, router]);
 
   if (status === "loading") {
@@ -55,34 +74,68 @@ export default function UserPrograms() {
   return (
     <Container maxW="container.lg" py={10}>
       <Heading as="h1" size="xl" textAlign="center" mb={6} color="teal.500">
-        Programas Disponibles
+        Programas Disponibles para {userLevel || "tu nivel"}
       </Heading>
 
-      <SimpleGrid columns={{ base: 1, md: 2, lg: 3 }} spacing={6}>
-        {isLoading
-          ? Array.from({ length: 3 }).map((_, index) => (
-              <Skeleton key={index} height="200px" borderRadius="lg" />
-            ))
-          : programs.length > 0 ? programs.map((program) => (
-              <Card key={program._id} borderWidth="1px" borderRadius="lg" p={4} boxShadow="md">
-                <CardBody>
-                  <Heading size="md" mb={2} color="teal.600">
-                    {program.name}
-                  </Heading>
-                  <Text fontSize="sm" mb={3} color="gray.600">
-                    {program.description}
-                  </Text>
-                  <Text fontWeight="bold" color="teal.700">
-                    {program.price}€
-                  </Text>
-                  <PayButton name={program.name} price={program.price} />
-                </CardBody>
-              </Card>
-            )) : (
-              <Text textAlign="center" color="gray.500">
-                No hay programas disponibles para tu nivel.
-              </Text>
-            )}
+      <SimpleGrid columns={{ base: 1, md: 2 }} spacing={6}>
+        {isLoading ? (
+          Array.from({ length: 3 }).map((_, index) => (
+            <Skeleton key={index} height="200px" borderRadius="lg" />
+          ))
+        ) : programs.length > 0 ? (
+          programs.map((program) => (
+            <Card
+              key={program._id}
+              borderWidth="1px"
+              borderRadius="lg"
+              textAlign={"center"}
+              p={4}
+              boxShadow="md"
+            >
+              <CardBody>
+                <Heading size="md" mb={2} color="teal.600">
+                  {program.name}
+                </Heading>
+                <Text fontSize="sm" mb={3} color="gray.600">
+                  {program.description}
+                </Text>
+
+                <Stack display={"flex"} flexDirection={"column"} spacing={2} mt={4}>
+                  {program.pricingOptions.map((option) => (
+                    <Stack key={option.period} align="left">
+                      <Text textAlign={"left"} color="teal.700">
+                        {option.period === "monthly"
+                          ? "Pago Mensual de "
+                          : option.period === "yearly"
+                          ? "Pago único de "
+                          : option.period === "weekly"
+                          ? "Semanal"
+                          : option.period}
+                         {option.price}€
+                      </Text>
+                      <PayButton
+                        programId={program._id}
+                        name={program.name}
+                        price={option.price}
+                        paymentType={program.paymentType}
+                        subscriptionDetails={
+                          program.paymentType === "subscription"
+                            ? { periodicity: option.period, duration: 12 }
+                            : undefined
+                        }
+                      />
+                      <Divider mt={3}/>
+                    </Stack>
+                  ))}
+                </Stack>
+              </CardBody>
+            </Card>
+          ))
+        ) : (
+          <Text textAlign="center" color="gray.500">
+            No hay programas disponibles para tu nivel.
+          </Text>
+        )}
       </SimpleGrid>
     </Container>
   );
