@@ -13,12 +13,6 @@ const TERMINAL = process.env.PAYCOMET_TERMINAL!;
 const PAYCOMET_URL_OK = process.env.PAYCOMET_URL_OK!;
 const PAYCOMET_URL_KO = process.env.PAYCOMET_URL_KO!;
 
-// Interfaces de respuesta de Paycomet
-interface PaycometUserResponse {
-  errorCode?: number;
-  idUser?: string;
-  tokenUser?: string;
-}
 
 interface PaycometPaymentResponse {
   errorCode: number;
@@ -81,8 +75,6 @@ export default async function handler(
         .json({ error: "Usuario no encontrado en la base de datos." });
     }
 
-    const { idUser, tokenUser } = user;
-
     // 8) Preparamos el payload de pago conforme a la documentación de Paycomet
     const payload = {
       operationType: 1, // Por ejemplo: 1 para autorización
@@ -109,13 +101,6 @@ export default async function handler(
       },
     };
 
-    // Agregamos idUser y tokenUser solo si tienen valor
-    if (idUser) {
-      payload.payment.idUser = Number(idUser);
-    }
-    if (tokenUser) {
-      payload.payment.tokenUser = tokenUser;
-    }
 
     console.log("🔹 Payload a Paycomet:", payload);
 
