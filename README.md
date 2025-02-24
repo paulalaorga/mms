@@ -1,40 +1,37 @@
-# 📌 Desarrollo de la Página de Programas - MMS
+## 🏗️ **Branch: `feature/admin-payments-list`**
 
-Este documento contiene el plan de trabajo para la implementación de la página `/programs` en la aplicación MMS.
+📌 **Objetivo:** Implementar una vista en el panel de administración para listar todos los pagos procesados por Paycomet.
 
-## 🚀 **Tareas y Progreso**
+### 🔹 **Tareas**
 
-### 🏗️ **1️⃣ Estructura de la Página de Programas**
+1️⃣ **Crear el endpoint para listar pagos (`/api/admin/payments`)**
 
-- [X] Crear el archivo `pages/programs.tsx`
-- [X] Agregar lista de programas con:
-  - [X] Nombre
-  - [X] Descripción
-  - [X] Precio
-- [X] Estilos en `Programs.module.css` o Tailwind
-  ✅ **Commit:** `feat: estructura inicial de la página de programas`
+* [ ] Desarrollar un endpoint `GET /api/admin/payments` que recupere la lista de pagos.
+* [ ] Validar que el usuario tenga privilegios de administrador.
+* [ ] Integrar el servicio que se conecte a la API de Paycomet y devuelva la información de los pagos.
+* [ ] Manejar errores (por ejemplo, problemas de conexión o autenticación con Paycomet).
 
-### 🔗 **2️⃣ Obtener Programas desde la Base de Datos**
+✅ **Commit:** `feat: endpoint GET /api/admin/payments para listar pagos de Paycomet`
 
-- [X] Crear el modelo `models/Program.ts`
-- [X] Crear el endpoint `GET /api/programs`
-- [X] Usar `getServerSideProps` para cargar los datos en `/programs`
-  ✅ **Commit:** `feat: conectar la página de programas con la API`
+2️⃣ **Desarrollar el servicio de integración con Paycomet**
 
-### 🛒 **3️⃣ Agregar Botón de Compra**
+* [ ] Crear un módulo/servicio que se comunique con la API de Paycomet para obtener la lista de pagos.
+* [ ] Configurar las credenciales y endpoints de Paycomet mediante variables de entorno.
+* [ ] Realizar pruebas unitarias del servicio para asegurar que se obtiene la información correctamente.
 
-- [X] Implementar un botón "Comprar ahora" en cada programa
-- [X] Redirigir a la página de pago (`/checkout`)
-  ✅ **Commit:** `feat: agregar botones de compra en los programas`
+✅ **Commit:** `feat: servicio de integración con Paycomet para listado de pagos`
 
-### 🎨 **4️⃣ Diseño y Estilos Mejorados**
+3️⃣ **Construir la vista en el panel de administración**
 
-- [X] Implementar diseño responsive con Tailwind
-- [X] Hacer la página visualmente atractiva con imágenes e iconos
-  ✅ **Commit:** `style: mejorar el diseño de la página de programas`
+* [ ] Crear una página en el área de administración que muestre la lista de pagos en una tabla.
+* [ ] Incluir columnas relevantes (por ejemplo, ID de pago, orden, monto, estado, fecha, etc.).
+* [ ] Implementar funcionalidades de búsqueda y paginación (si es necesario).
 
-### 💳 **5️⃣ Integración con Paycomet**
+✅ **Commit:** `feat: vista de listado de pagos en panel de administración`
 
-- [X] Llamar a `form.ts` para generar el enlace de pago
-- [X] Redirigir al usuario a la pasarela de pago
-  ✅ **Commit:** `feat: integración con Paycomet en la página de programas`
+4️⃣ **Tests y validaciones**
+
+* [ ] Agregar tests de integración para el endpoint de pagos.
+* [ ] Verificar que la vista se renderice correctamente y muestre la información real obtenida desde Paycomet.
+
+✅ **Commit:** `test: agregar tests para listado de pagos`

@@ -19,4 +19,24 @@ export const payWithPaycomet = async (amount: number, orderId: string) => {
     }
   };
 
+export async function getPaycometPayments() {
+  // Aquí implementarás la lógica para conectar con la API de Paycomet.
+  // Utiliza variables de entorno para las credenciales y endpoints.
+  // Por ejemplo:
+  // const response = await fetch(process.env.PAYCOMET_API_URL + "/payments", { ... });
+  // return await response.json();
+
+  // Por ahora devolvemos un array dummy
+  return [
+    {
+      paymentId: "123456",
+      orderId: "order_001",
+      amount: 250,
+      currency: "EUR",
+      status: "completed",
+      date: "2025-02-24T12:00:00Z",
+    },
+  ];
+}
+
   
