@@ -22,6 +22,8 @@ export interface IUser extends Document {
   nextSessionDate?: string | null;
   provider?: string;
   activeSubscription?: Types.ObjectId;
+  idUser?: string;
+  tokenUser?: string;
 }
 
 const UserSchema = new Schema<IUser>({
@@ -50,6 +52,11 @@ const UserSchema = new Schema<IUser>({
     ref: "Subscription",
     default: null,
   },
-});
+  idUser: { type: String, default: null },
+  tokenUser: { type: String, default: null },
+}, {
+  timestamps: true,
+}
+);
 
 export default mongoose.models.User || mongoose.model<IUser>("User", UserSchema);

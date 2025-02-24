@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Button } from "@chakra-ui/react";
+import { useSession } from "next-auth/react";
 
 interface PayButtonProps {
   programId: string;
@@ -13,21 +14,29 @@ interface PayButtonProps {
   order?: string;
 }
 
-const PayButton: React.FC<PayButtonProps> = ({ programId, order }) => {
+const PayButton: React.FC<PayButtonProps> = ({
+  programId,
+  name,
+  price,
+  paymentType,
+  subscriptionDetails,
+  order,
+}) => {
+  const { data: session } = useSession();
   const [loading, setLoading] = useState(false);
 
   const handlePayment = async () => {
     setLoading(true);
     try {
+      // Construimos el body para el endpoint
       const requestData = {
-        // Nombre del programa para que el backend sepa cuál es
-        // (y su precio interno).
+        amount: price,
         programId,
-        // Order del pedido o generada en backend
-        order: order || `ORDER_${Date.now()}`
+        name: session?.user?.name + name,             
+        paymentType,         // "one-time" o "subscription"
+        subscriptionDetails, // { periodicity, duration } si aplica
+        orderId: order || `ORDER_${Date.now()}`,
       };
-
-      console.log("📤 Enviando solicitud a /api/paycomet/form-initialize:", requestData);
 
       const response = await fetch("/api/paycomet/form-initialize", {
         method: "POST",
@@ -36,16 +45,13 @@ const PayButton: React.FC<PayButtonProps> = ({ programId, order }) => {
       });
 
       const data = await response.json();
-
-      console.log("🔄 Respuesta de /api/paycomet/form-initialize:", data);
-
       if (data.error) {
         alert("❌ Error al generar URL de pago: " + data.error);
-      } else if (data.paymentUrl) {
-        // Redirigimos al usuario a la página de Paycomet
-        window.location.href = data.paymentUrl;
+      } else if (data.payment_url) {
+        // Redirige al 3DS page de Paycomet
+        window.location.href = data.payment_url;
       } else {
-        alert("⚠️ No se recibió paymentUrl");
+        alert("⚠️ No se recibió payment_url");
       }
     } catch (error) {
       console.error("❌ Error en la solicitud de pago", error);
@@ -56,15 +62,8 @@ const PayButton: React.FC<PayButtonProps> = ({ programId, order }) => {
   };
 
   return (
-    <Button
-      onClick={handlePayment}
-      isLoading={loading}
-      colorScheme="teal"
-      size="md"
-      width="100%"
-      mt={4}
-    >
-      Apúntate ya 
+    <Button onClick={handlePayment} isLoading={loading} colorScheme="teal" size="md" width="100%" mt={4}>
+      {paymentType === "one-time" ? "Pagar una vez" : "Suscribirse"}
     </Button>
   );
 };

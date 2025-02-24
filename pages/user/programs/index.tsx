@@ -14,7 +14,7 @@ import {
   Stack,
   Divider,
 } from "@chakra-ui/react";
-import PayButton from "@/components/ui/PayButton"; // Asegúrate de que este componente existe
+import PayButton from "@/components/payments/PayButton"; // Asegúrate de que este componente existe
 
 type PricingOption = {
   period: "monthly" | "yearly" | "weekly";
@@ -77,7 +77,7 @@ export default function UserPrograms() {
         Programas Disponibles para {userLevel || "tu nivel"}
       </Heading>
 
-      <SimpleGrid columns={{ base: 1, md: 2 }} spacing={6}>
+      <SimpleGrid columns={{ base: 1, md: 2 }} spacing={6} >
         {isLoading ? (
           Array.from({ length: 3 }).map((_, index) => (
             <Skeleton key={index} height="200px" borderRadius="lg" />
@@ -105,7 +105,7 @@ export default function UserPrograms() {
                     <Stack key={option.period} align="left">
                       <Text textAlign={"left"} color="teal.700">
                         {option.period === "monthly"
-                          ? "Pago Mensual de "
+                          ? "P Mensual de "
                           : option.period === "yearly"
                           ? "Pago único de "
                           : option.period === "weekly"
