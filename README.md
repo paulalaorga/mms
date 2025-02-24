@@ -35,6 +35,6 @@ Este documento contiene el plan de trabajo para la implementación de la página
 
 ### 💳 **5️⃣ Integración con Paycomet**
 
-- [ ] Llamar a `form.ts` para generar el enlace de pago
-- [ ] Redirigir al usuario a la pasarela de pago
+- [X] Llamar a `form.ts` para generar el enlace de pago
+- [X] Redirigir al usuario a la pasarela de pago
   ✅ **Commit:** `feat: integración con Paycomet en la página de programas`
