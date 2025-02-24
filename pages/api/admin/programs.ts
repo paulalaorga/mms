@@ -1,31 +1,39 @@
+/* eslint-disable prefer-const */
 import { NextApiRequest, NextApiResponse } from "next";
 import dbConnect from "@/lib/mongodb";
 import Program from "@/models/Program";
+
+interface PricingOption {
+  period: string;
+  price: number;
+}
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   await dbConnect();
 
   try {
     if (req.method === "POST") {
-      const {
+      let {
         name,
         description,
         groupLevel,
         paymentType,
         billingFrequency,
         billingCycles,
-        pricingOptions, // Se espera solo este campo para los precios
+        pricingOptions,
+        hasIndividualSessions,
+        individualSession,
       } = req.body;
 
-      // Validaciones básicas
+      // Validaciones básicas: si faltan campos obligatorios, se retorna error
       if (!name || !description || !groupLevel || !paymentType) {
-        console.error("❌ Datos inválidos recibidos:", req.body);
         return res.status(400).json({ error: "Todos los campos obligatorios deben estar presentes." });
       }
 
-      // Para pago único, podrías validar que pricingOptions contenga la opción correcta,
-      // por ejemplo, que exista una opción con period "yearly" o alguna otra convención.
-      // Esto depende de tu lógica de negocio.
+      // Verificación: si alguna opción de precio tiene period "yearly", se convierte a pago único
+      if (pricingOptions && pricingOptions.some((option: PricingOption) => option.period === "yearly")) {
+        paymentType = "one-time";
+      }
 
       const newProgram = new Program({
         name,
@@ -35,6 +43,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         billingFrequency: billingFrequency ?? null,
         billingCycles: billingCycles ?? null,
         pricingOptions: pricingOptions ?? [],
+        hasIndividualSessions: hasIndividualSessions ?? false,
+        individualSession: individualSession ?? null,
       });
 
       await newProgram.save();

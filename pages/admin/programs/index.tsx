@@ -16,10 +16,11 @@ import {
   FormLabel,
   Select,
   useToast,
+  Checkbox,
 } from "@chakra-ui/react";
 
 type PaymentType = "subscription" | "one-time";
-type GroupLevel = "Fundamental" | "Avanzado" | "VIP";
+type GroupLevel = "Fundamental" | "Avanzado";
 
 type PricingOption = {
   period: "monthly" | "yearly" | "weekly";
@@ -36,6 +37,8 @@ type ProgramType = {
   billingFrequency?: number | undefined; // ✅ Ahora permite `undefined`, pero no `null`
   billingCycles?: number | undefined;
   pricingOptions?: PricingOption[];
+  hasIndividualSessions?: boolean;
+  individualSession: number | null;
 };
 
 export default function AdminPrograms() {
@@ -49,6 +52,8 @@ export default function AdminPrograms() {
     paymentType: "subscription",
     billingFrequency: undefined, // ✅ Usamos `undefined` en lugar de `null`
     billingCycles: undefined,
+    hasIndividualSessions: false,
+    individualSession: null,
   });
   const [pricingOptions, setPricingOptions] = useState<PricingOption[]>([]);
 
@@ -71,7 +76,9 @@ export default function AdminPrograms() {
     setForm((prev) => ({
       ...prev,
       [name]:
-        name === "price" || name === "billingCycles" ? Number(value) : value,
+        name === "price" || name === "billingCycles" || name === "individualSession" 
+        ? value === "" ? null : Number(value) // ✅ Convertimos a `null` si está vacío
+        : value,
     }));
   };
 
@@ -86,19 +93,21 @@ export default function AdminPrograms() {
         form.billingFrequency !== undefined ? form.billingFrequency : null,
       billingCycles:
         form.billingCycles !== undefined ? form.billingCycles : null,
-      pricingOptions: pricingOptions, // <-- Se añade este campo
+      pricingOptions: pricingOptions,
+      hasIndividualSessions: form.hasIndividualSessions,
+      individualSession: form.individualSession,
     });
-  
+
     console.log("🔍 Enviando datos a la API:", body);
-  
+
     const response = await fetch("/api/admin/programs", {
       method,
       headers: { "Content-Type": "application/json" },
       body,
     });
-  
+
     const responseData = await response.json().catch(() => null);
-  
+
     if (response.ok) {
       toast({
         title: isEditing ? "Programa actualizado" : "Programa creado",
@@ -112,8 +121,10 @@ export default function AdminPrograms() {
         paymentType: "subscription",
         billingFrequency: undefined,
         billingCycles: undefined,
+        hasIndividualSessions: false,
+        individualSession: null,
       });
-      // Limpiar también las opciones de precio
+   
       setPricingOptions([]);
       fetch("/api/admin/programs")
         .then((res) => res.json())
@@ -125,12 +136,6 @@ export default function AdminPrograms() {
         status: "error",
       });
     }
-  };
-  
-
-  const handleEdit = (program: ProgramType) => {
-    setForm(program);
-    setIsEditing(true);
   };
 
   const handleDelete = async (id: string) => {
@@ -173,8 +178,24 @@ export default function AdminPrograms() {
         >
           <option value="Fundamental">Fundamental</option>
           <option value="Avanzado">Avanzado</option>
-          <option value="VIP">VIP</option>
         </Select>
+
+        <FormLabel>Terapias Individuales</FormLabel>
+        <Checkbox
+          isChecked={form.hasIndividualSessions}
+          onChange={(e) =>
+            setForm({ ...form, hasIndividualSessions: e.target.checked })
+          }
+        >
+          Incluir sesiones individuales
+        </Checkbox>
+        <Input
+          name="individualSession"
+          type="number"
+          placeholder="Cantidad de Terapias Individuales"
+          value={form.individualSession ?? ""}
+          onChange={handleInputChange}
+        />
 
         <Stack spacing={4} mb={6}>
           <Heading size="md">Opciones de Precio</Heading>
@@ -193,7 +214,6 @@ export default function AdminPrograms() {
               >
                 <option value="monthly">Mensual</option>
                 <option value="yearly">Pago Único</option>
-                <option value="weekly">Semanal</option>
               </Select>
               <Input
                 type="number"
@@ -236,68 +256,71 @@ export default function AdminPrograms() {
       </Stack>
 
       <Table variant="simple">
-  <Thead>
-    <Tr>
-      <Th>Nombre</Th>
-      <Th>Nivel de Terapia</Th>
-      <Th>Opciones de Pago</Th>
-      <Th>Usuarios Activos</Th>
-      <Th></Th>
-    </Tr>
-  </Thead>
-  <Tbody>
-    {programs?.length > 0 ? (
-      programs.map((program) => (
-        <Tr key={program._id}>
-          <Td>{program.name}</Td>
-          <Td>{program.groupLevel}</Td>
-          <Td>
-                {program.pricingOptions && program.pricingOptions.length > 0 ? (
-                  program.pricingOptions.map((option, index) => (
-                    <div key={index}>
-                      <strong>
-                        {option.period === "monthly"
-                          ? "Mensual"
-                          : option.period === "yearly"
-                          ? "Anual"
-                          : option.period === "weekly"
-                          ? "Semanal"
-                          : option.period}
-                        :
-                      </strong>{" "}
-                      {option.price}€
-                    </div>
-                  ))
-                ) : (
-                  <div>No hay opciones de suscripción configuradas</div>
-            )}
-          </Td>
+        <Thead>
+          <Tr>
+            <Th>Nombre</Th>
+            <Th>Nivel de Terapia</Th>
+            <Th>Sesiones Individuales</Th>
+            <Th>Opciones de Pago</Th>
+            <Th>Usuarios Activos</Th>
+            <Th></Th>
+          </Tr>
+        </Thead>
+        <Tbody>
+          {programs?.length > 0 ? (
+            programs.map((program) => (
+              <Tr key={program._id}>
+                <Td>{program.name}</Td>
+                <Td>{program.groupLevel}</Td>
+                <Td>
+                  {program.hasIndividualSessions
+                    ? program.individualSession
+                    : "No"}
+                </Td>
+                <Td>
+                  {program.pricingOptions &&
+                  program.pricingOptions.length > 0 ? (
+                    program.pricingOptions.map((option, index) => (
+                      <div key={index}>
+                        <strong>
+                          {option.period === "monthly"
+                            ? "Mensual"
+                            : option.period === "yearly"
+                              ? "Anual"
+                              : option.period === "weekly"
+                                ? "Semanal"
+                                : option.period}
+                          :
+                        </strong>{" "}
+                        {option.price}€
+                      </div>
+                    ))
+                  ) : (
+                    <div>No hay opciones de suscripción configuradas</div>
+                  )}
+                </Td>
 
-          <Td>{program.userCount || 0}</Td>
-          <Td>
-            <Button size="sm" onClick={() => handleEdit(program)}>
-              Editar
-            </Button>
-            <Button
-              size="sm"
-              colorScheme="red"
-              onClick={() => handleDelete(program._id!)}
-            >
-              Eliminar
-            </Button>
-          </Td>
-        </Tr>
-      ))
-    ) : (
-      <Tr>
-        <Td colSpan={5} style={{ textAlign: "center", padding: "20px" }}>
-          No hay programas disponibles.
-        </Td>
-      </Tr>
-    )}
-  </Tbody>
-</Table>
-
+                <Td>{program.userCount || 0}</Td>
+                <Td>
+                  <Button
+                    size="sm"
+                    colorScheme="red"
+                    onClick={() => handleDelete(program._id!)}
+                  >
+                    Eliminar
+                  </Button>
+                </Td>
+              </Tr>
+            ))
+          ) : (
+            <Tr>
+              <Td colSpan={5} style={{ textAlign: "center", padding: "20px" }}>
+                No hay programas disponibles.
+              </Td>
+            </Tr>
+          )}
+        </Tbody>
+      </Table>
     </Container>
   );
 }

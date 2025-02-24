@@ -19,6 +19,8 @@ export interface IProgram extends Document {
   };
   pricingOptions?: IPricingOption[];
   paymentOptions: string[];
+  hasIndividualSessions?: boolean;
+  individualSession?: number;
 }
 
 // Esquema para cada opción de precio
@@ -32,7 +34,7 @@ const PricingOptionSchema = new Schema<IPricingOption>({
 const ProgramSchema = new Schema<IProgram>({
   name: { type: String, required: true },
   description: { type: String, required: true },
-  groupLevel: { type: String, enum: ["Fundamental", "Avanzado", "VIP"], required: true },
+  groupLevel: { type: String, enum: ["Fundamental", "Avanzado"], required: true },
   paymentType: { type: String, enum: ["subscription", "one-time"], required: true },
   suscriptionDetails: {
     periodicity: { type: String, enum: ["monthly", "weekly", "yearly"] },
@@ -40,6 +42,8 @@ const ProgramSchema = new Schema<IProgram>({
   },
   pricingOptions: { type: [PricingOptionSchema], default: [] },
   paymentOptions: { type: [String], default: [] },
+  hasIndividualSessions: { type: Boolean, default: false },
+  individualSession: { type: Number, default: undefined },
 });
 
 // Forzamos la recompilación del modelo si ya existe
