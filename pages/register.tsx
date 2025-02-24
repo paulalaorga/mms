@@ -11,7 +11,7 @@ import {
   AlertIcon,
 } from "@chakra-ui/react";
 
-import Navbar from "../src/components/layout/Navbar";
+import Navbar from "@/components/layout/Navbar";
 import NextLink from "next/link";
 import Input from "@/components/ui/Input";
 import MyButton from "@/components/ui/Button";
