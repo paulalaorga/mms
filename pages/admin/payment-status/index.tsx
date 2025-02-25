@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import React, { useState, useEffect } from "react";
@@ -145,9 +146,11 @@ export default function PaymentStatus() {
   }, []);
 
   return (
-    <Container ml={0} mt={10}>
-      {/* Sección para consultar estado de pago individual */}
-      <Heading mb={4}>Consultar Estado de Pago</Heading>
+    <Container ml={0} mt={10} w={"100%"} maxW={"container.lg"} display={"flex"} flexDirection={"column"}>
+      <Heading textAlign={"center"}>Panel de Administración de Facturación</Heading>
+      <Box mt={4} mb={4} display={"flex"} justifyContent={"space-between"} alignItems={"center"}>
+      <Box mt={4} mb={4} textAlign="left" alignSelf={"flex-start"}>
+      <Heading size={"lg"} mb={4}>Buscar Pago</Heading>
       <Input
         placeholder="Ingresa el número de orden"
         value={order}
@@ -163,6 +166,15 @@ export default function PaymentStatus() {
           <Text>{errorStatus}</Text>
         </Box>
       )}
+      </Box>
+      <Button
+        as="a"
+        href="/admin/suscriptions"
+        colorScheme="teal"
+        m={4}
+      >Administrar Suscripciones</Button>
+      {/* Sección para consultar estado de pago individual */}
+      </Box>
       {paymentStatus &&  (
         <Box mt={4} p={4} borderWidth="1px" borderRadius="md">
           <Text>

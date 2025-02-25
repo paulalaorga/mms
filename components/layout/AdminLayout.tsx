@@ -31,16 +31,16 @@ const AdminLayout = ({ children }: { children: ReactNode }) => {
         <VStack align="start" spacing={4}>
           <Link fontSize="xl" fontWeight="bold" href="/admin">Panel de Inicio</Link>
           <Link as={NextLink} href="/admin/users" _hover={{ textDecoration: "underline" }}>
-            Lista de Usuarios
+            Usuarios
           </Link>
           <Link as={NextLink} href="/admin/payment-status" _hover={{ textDecoration: "underline" }}>
-            Lista de Pagos
+            Facturación
           </Link>
           <Link as={NextLink} href="/admin/programs" _hover={{ textDecoration: "underline" }}>
-            Administrar Programas
+            Programas
           </Link>
           <Link as={NextLink} href="/admin/emails" _hover={{ textDecoration: "underline" }}>
-            Plantillas de Email
+            Emails
           </Link>
           <Link as={NextLink} href="/admin/reportes" _hover={{ textDecoration: "underline" }}>
             Reportes
