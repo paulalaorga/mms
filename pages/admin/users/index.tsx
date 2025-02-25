@@ -98,16 +98,26 @@ export default function UsersPage() {
       let valueA: string | number | boolean | Date = a[field] ?? "";
       let valueB: string | number | boolean | Date = b[field] ?? "";
     
-      // 📌 Asegurar que `createdAt` se ordena correctamente como fecha
+      // Asegurar que createdAt se ordena correctamente como fecha
       if (field === "createdAt") {
-        valueA = a.createdAt ? new Date(a.createdAt) : 0;
-        valueB = b.createdAt ? new Date(b.createdAt) : 0;
+        valueA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+        valueB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
       }
     
+      // Comparación numérica (timestamp) si es fecha
+      if (valueA instanceof Date && valueB instanceof Date) {
+        return order === "asc"
+          ? valueA.getTime() - valueB.getTime()
+          : valueB.getTime() - valueA.getTime();
+      }
+    
+      // Comparación genérica para otros tipos de datos
       if (valueA < valueB) return order === "asc" ? -1 : 1;
       if (valueA > valueB) return order === "asc" ? 1 : -1;
       return 0;
     });
+    
+    
     
 
     setFilteredUsers(sortedUsers);
