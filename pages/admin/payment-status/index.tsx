@@ -59,6 +59,7 @@ interface PaymentStatusData {
 interface Payment {
   paymentId: string;
   orderId: string;
+  paycometId: string;
   status: string;
   amount: number;
   currency: string;
@@ -126,6 +127,7 @@ export default function PaymentStatus() {
         const mappedPayments: Payment[] = operations.map((op: any) => ({
           paymentId: op.paycometId || op.operationId.toString(),
           orderId: op.order,
+          paycometId: op.paycometId,
           status: op.stateName,
           amount: Number(op.amountEur),
           currency: op.currency,
@@ -216,7 +218,7 @@ export default function PaymentStatus() {
         <Table variant="simple" size="sm">
           <Thead>
             <Tr>
-              <Th>ID de Orden</Th>
+              <Th>Nº de Orden</Th>
               <Th>ID de Paycomet</Th>
               <Th>Cantidad</Th>
               <Th>Asunto</Th>
@@ -228,7 +230,7 @@ export default function PaymentStatus() {
             {paymentsList.map((payment) => (
               <Tr key={payment.paymentId}>
                 <Td>{payment.orderId}</Td>
-                <Td>{payment.paymentId}</Td>
+                <Td>{payment.paycometId}</Td>
                 <Td>{payment.amount}€</Td>
                 <Td>{payment.productDescription}</Td>
                 <Td>{payment.status}</Td>

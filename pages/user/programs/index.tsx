@@ -105,7 +105,7 @@ export default function UserPrograms() {
                     <Stack key={option.period} align="left">
                       <Text textAlign={"left"} color="teal.700">
                         {option.period === "monthly"
-                          ? "P Mensual de "
+                          ? "Pago Mensual de "
                           : option.period === "yearly"
                           ? "Pago único de "
                           : option.period === "weekly"
