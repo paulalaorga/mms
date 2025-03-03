@@ -19,26 +19,26 @@ import {
   Checkbox,
 } from "@chakra-ui/react";
 
-type PaymentType = "subscription" | "one-time";
 type GroupLevel = "Fundamental" | "Avanzado";
 
-type PricingOption = {
-  period: "monthly" | "yearly" | "weekly";
-  price: number | null; // ✅ Ahora permite `null`
-  billingCycles?: number | null;
+type PaymentOption = {
+  type: "one-time" | "subscription";
+  price: number | null;
+  subscriptionDetails?: {
+    duration: number;
+    renewalPeriod: "monthly" | "yearly";
+  };
 };
 
 type ProgramType = {
   _id?: string;
-  name: string;
+  programId?: string; // ✅ Ahora lo incluimos en el formulario
+  programName: string;
   description: string;
   groupLevel: GroupLevel;
-  paymentType: PaymentType;
-  billingFrequency?: number | undefined; // ✅ Ahora permite `undefined`, pero no `null`
-  billingCycles?: number | undefined;
-  pricingOptions?: PricingOption[];
+  paymentOptions: PaymentOption[];
   hasIndividualSessions?: boolean;
-  individualSession: number | null;
+  individualSessionQuantity?: number | null;
 };
 
 export default function AdminPrograms() {
@@ -46,16 +46,13 @@ export default function AdminPrograms() {
     (ProgramType & { userCount?: number })[]
   >([]);
   const [form, setForm] = useState<ProgramType>({
-    name: "",
+    programName: "",
     description: "",
     groupLevel: "Fundamental",
-    paymentType: "subscription",
-    billingFrequency: undefined, // ✅ Usamos `undefined` en lugar de `null`
-    billingCycles: undefined,
+    paymentOptions: [],
     hasIndividualSessions: false,
-    individualSession: null,
+    individualSessionQuantity: null,
   });
-  const [pricingOptions, setPricingOptions] = useState<PricingOption[]>([]);
 
   const [isEditing, setIsEditing] = useState(false);
   const toast = useToast();
@@ -76,26 +73,64 @@ export default function AdminPrograms() {
     setForm((prev) => ({
       ...prev,
       [name]:
-        name === "price" || name === "billingCycles" || name === "individualSession" 
-        ? value === "" ? null : Number(value) // ✅ Convertimos a `null` si está vacío
-        : value,
+        value === ""
+          ? null
+          : ["individualSessionQuantity"].includes(name)
+            ? Number(value)
+            : value,
     }));
+  };
+
+  const handleAddPaymentOption = () => {
+    setForm((prev) => ({
+      ...prev,
+      paymentOptions: [
+        ...prev.paymentOptions,
+        { type: "one-time", price: null },
+      ],
+    }));
+  };
+
+  const handleRemovePaymentOption = (index: number) => {
+    setForm((prev) => ({
+      ...prev,
+      paymentOptions: prev.paymentOptions.filter((_, i) => i !== index),
+    }));
+  };
+
+  const handlePaymentOptionChange = (
+    index: number,
+    field: keyof PaymentOption,
+    value: string | number
+  ) => {
+    setForm((prev) => {
+      const newPaymentOptions = [...prev.paymentOptions];
+      if (field === "subscriptionDetails") {
+        newPaymentOptions[index].subscriptionDetails = {
+          duration: Number(value),
+          renewalPeriod: "monthly",
+        };
+      } else if (field === "type") {
+        newPaymentOptions[index].type = value as "one-time" | "subscription";
+      } else if (field === "price") {
+        newPaymentOptions[index].price = value as number;
+      }
+      return { ...prev, paymentOptions: newPaymentOptions };
+    });
   };
 
   const handleSubmit = async () => {
     const method = isEditing ? "PUT" : "POST";
     const body = JSON.stringify({
-      name: form.name,
+      programId: form.programId || `prog_${Date.now()}`, // ✅ Generar un programId si no se proporciona
+      programName: form.programName,
       description: form.description,
       groupLevel: form.groupLevel,
-      paymentType: form.paymentType,
-      billingFrequency:
-        form.billingFrequency !== undefined ? form.billingFrequency : null,
-      billingCycles:
-        form.billingCycles !== undefined ? form.billingCycles : null,
-      pricingOptions: pricingOptions,
+      paymentOptions: form.paymentOptions,
       hasIndividualSessions: form.hasIndividualSessions,
-      individualSession: form.individualSession,
+      individualSessionQuantity: form.hasIndividualSessions
+        ? form.individualSessionQuantity
+        : null,
     });
 
     console.log("🔍 Enviando datos a la API:", body);
@@ -115,17 +150,13 @@ export default function AdminPrograms() {
       });
       setIsEditing(false);
       setForm({
-        name: "",
+        programName: "",
         description: "",
         groupLevel: "Fundamental",
-        paymentType: "subscription",
-        billingFrequency: undefined,
-        billingCycles: undefined,
+        paymentOptions: [],
         hasIndividualSessions: false,
-        individualSession: null,
+        individualSessionQuantity: null,
       });
-   
-      setPricingOptions([]);
       fetch("/api/admin/programs")
         .then((res) => res.json())
         .then(setPrograms);
@@ -138,16 +169,16 @@ export default function AdminPrograms() {
     }
   };
 
-  const handleDelete = async (id: string) => {
+  const handleDelete = async (_id: string) => {
     const response = await fetch("/api/admin/programs", {
       method: "DELETE",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ id }),
+      body: JSON.stringify({ id: _id }),
     });
 
     if (response.ok) {
       toast({ title: "Programa eliminado", status: "success" });
-      setPrograms(programs.filter((p) => p._id && p._id !== id));
+      setPrograms(programs.filter((p) => p._id !== _id));
     } else {
       toast({ title: "Error al eliminar el programa", status: "error" });
     }
@@ -155,13 +186,17 @@ export default function AdminPrograms() {
 
   return (
     <Container maxW="container.lg">
-      <Heading as="h1" size="xl" my={6}>
+      <Heading as="h1" size="xl" my={6} textAlign={"center"}>
         Administrar Programas
       </Heading>
 
       <Stack spacing={4} mb={6}>
         <FormLabel>Nombre del Programa</FormLabel>
-        <Input name="name" value={form.name} onChange={handleInputChange} />
+        <Input
+          name="programName"
+          value={form.programName}
+          onChange={handleInputChange}
+        />
 
         <FormLabel>Descripción del Programa</FormLabel>
         <Input
@@ -180,6 +215,56 @@ export default function AdminPrograms() {
           <option value="Avanzado">Avanzado</option>
         </Select>
 
+        <FormLabel>Opciones de Pago</FormLabel>
+        {form.paymentOptions.map((option, index) => (
+          <Stack key={index} direction="row" align="center">
+            <Select
+              value={option.type}
+              onChange={(e) =>
+                handlePaymentOptionChange(index, "type", e.target.value)
+              }
+            >
+              <option value="one-time">Pago Único</option>
+              <option value="subscription">Suscripción</option>
+            </Select>
+            <Input
+              type="number"
+              placeholder="Precio (€)"
+              value={option.price ?? ""}
+              onChange={(e) =>
+                handlePaymentOptionChange(
+                  index,
+                  "price",
+                  Number(e.target.value)
+                )
+              }
+            />
+            {option.type === "subscription" && (
+              <Input
+                type="number"
+                placeholder="Duración (meses)"
+                value={option.subscriptionDetails?.duration ?? ""}
+                onChange={(e) =>
+                  handlePaymentOptionChange(
+                    index,
+                    "subscriptionDetails",
+                    Number(e.target.value)
+                  )
+                }
+              />
+            )}
+            <Button
+              colorScheme="red"
+              onClick={() => handleRemovePaymentOption(index)}
+            >
+              Eliminar
+            </Button>
+          </Stack>
+        ))}
+        <Button colorScheme="blue" onClick={handleAddPaymentOption}>
+          Agregar Opción de Pago
+        </Button>
+
         <FormLabel>Terapias Individuales</FormLabel>
         <Checkbox
           isChecked={form.hasIndividualSessions}
@@ -189,66 +274,18 @@ export default function AdminPrograms() {
         >
           Incluir sesiones individuales
         </Checkbox>
-        <Input
-          name="individualSession"
-          type="number"
-          placeholder="Cantidad de Terapias Individuales"
-          value={form.individualSession ?? ""}
-          onChange={handleInputChange}
-        />
 
-        <Stack spacing={4} mb={6}>
-          <Heading size="md">Opciones de Precio</Heading>
-
-          {pricingOptions.map((option, index) => (
-            <Stack key={index} direction="row" align="center">
-              <Select
-                value={option.period}
-                onChange={(e) => {
-                  const newOptions = [...pricingOptions];
-                  newOptions[index].period = e.target.value as
-                    | "monthly"
-                    | "yearly";
-                  setPricingOptions(newOptions);
-                }}
-              >
-                <option value="monthly">Mensual</option>
-                <option value="yearly">Pago Único</option>
-              </Select>
-              <Input
-                type="number"
-                placeholder="Precio (€)"
-                value={option.price ?? ""}
-                onChange={(e) => {
-                  const newOptions = [...pricingOptions];
-                  newOptions[index].price = Number(e.target.value);
-                  setPricingOptions(newOptions);
-                }}
-              />
-              <Input
-                type="number"
-                placeholder="Ciclos de Facturación"
-                value={option.billingCycles ?? ""}
-                onChange={(e) => {
-                  const newOptions = [...pricingOptions];
-                  newOptions[index].billingCycles = Number(e.target.value);
-                  setPricingOptions(newOptions);
-                }}
-              />
-            </Stack>
-          ))}
-
-          <Button
-            onClick={() =>
-              setPricingOptions([
-                ...pricingOptions,
-                { period: "monthly", price: null }, // Valor inicial
-              ])
-            }
-          >
-            Agregar Opción de Precio
-          </Button>
-        </Stack>
+        {form.hasIndividualSessions && (
+          <>
+            <FormLabel>Cantidad de Terapias Individuales</FormLabel>
+            <Input
+              name="individualSessionQuantity"
+              type="number"
+              value={form.individualSessionQuantity ?? ""}
+              onChange={handleInputChange}
+            />
+          </>
+        )}
 
         <Button colorScheme="teal" onClick={handleSubmit}>
           {isEditing ? "Actualizar Programa" : "Crear Programa"}
@@ -269,37 +306,36 @@ export default function AdminPrograms() {
         <Tbody>
           {programs?.length > 0 ? (
             programs.map((program) => (
-              <Tr key={program._id}>
-                <Td>{program.name}</Td>
+              <Tr key={program.programId}>
+                <Td>{program.programName}</Td>
                 <Td>{program.groupLevel}</Td>
                 <Td>
                   {program.hasIndividualSessions
-                    ? program.individualSession
+                    ? program.individualSessionQuantity
                     : "No"}
                 </Td>
                 <Td>
-                  {program.pricingOptions &&
-                  program.pricingOptions.length > 0 ? (
-                    program.pricingOptions.map((option, index) => (
+                  {Array.isArray(program.paymentOptions) &&
+                  program.paymentOptions.length > 0 ? (
+                    program.paymentOptions.map((option, index) => (
                       <div key={index}>
                         <strong>
-                          {option.period === "monthly"
-                            ? "Mensual"
-                            : option.period === "yearly"
-                              ? "Anual"
-                              : option.period === "weekly"
-                                ? "Semanal"
-                                : option.period}
+                          {option.type === "one-time"
+                            ? "Pago Único"
+                            : "Suscripción"}
                           :
                         </strong>{" "}
                         {option.price}€
+                        {option.type === "subscription" &&
+                          option.subscriptionDetails && (
+                            <> / {option.subscriptionDetails.duration} meses </>
+                          )}
                       </div>
                     ))
                   ) : (
-                    <div>No hay opciones de suscripción configuradas</div>
+                    <div>No hay opciones de pago configuradas</div>
                   )}
                 </Td>
-
                 <Td>{program.userCount || 0}</Td>
                 <Td>
                   <Button
@@ -314,7 +350,7 @@ export default function AdminPrograms() {
             ))
           ) : (
             <Tr>
-              <Td colSpan={5} style={{ textAlign: "center", padding: "20px" }}>
+              <Td colSpan={6} style={{ textAlign: "center", padding: "20px" }}>
                 No hay programas disponibles.
               </Td>
             </Tr>

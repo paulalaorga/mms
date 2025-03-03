@@ -1,60 +1,83 @@
 import { useState } from "react";
 import { Button } from "@chakra-ui/react";
 import { useSession } from "next-auth/react";
+import { Types } from "mongoose";
 
 interface PayButtonProps {
-  programId: string;
-  name: string;
+  _id: Types.ObjectId;
+  userName: string;
+  programName: string;
   price: number;
-  paymentType: "subscription" | "one-time";
-  subscriptionDetails?: {
-    periodicity: string;
-    duration: number;
-  };
-  order?: string;
+  onPaymentSuccess?: () => void;
 }
 
-const PayButton: React.FC<PayButtonProps> = ({
-  programId,
-  name,
-  price,
-  paymentType,
-  subscriptionDetails,
-  order,
-}) => {
+const PayButton: React.FC<PayButtonProps> = ({ _id, userName, programName, price, onPaymentSuccess }) => {
   const { data: session } = useSession();
   const [loading, setLoading] = useState(false);
 
   const handlePayment = async () => {
     setLoading(true);
     try {
-      // Construimos el body para el endpoint
-      const requestData = {
-        amount: price,
-        programId,
-        name: session?.user?.name + name,             
-        paymentType,         // "one-time" o "subscription"
-        subscriptionDetails, // { periodicity, duration } si aplica
-        orderId: order || `ORDER_${Date.now()}`,
-      };
+      const userId = session?.user?.id || session?.user?.email;
+      
 
-      const response = await fetch("/api/paycomet/form-initialize", {
+      if (!userId) {
+        alert("⚠️ No se pudo obtener la sesión del usuario. Intenta iniciar sesión de nuevo.");
+        setLoading(false);
+        return;
+      }
+
+      const orderCounter = await fetch("/api/payments/generate-order", { method: "POST" });
+      const orderCounterData = await orderCounter.json();
+
+      if (!orderCounterData.orderId) {
+        alert("⚠️ No se pudo generar un número de orden. Inténtalo de nuevo más tarde.");
+        setLoading(false);
+        return;
+      }
+
+      const orderId = orderCounterData.orderId;
+
+      const paymentData = {
+          _id,
+          userId,
+          userName,
+          programName,
+          amount: price,
+          orderId,
+        };
+      console.log("🔹 Datos de pago:", paymentData)
+      
+      const response = await fetch("/api/payments/onepayment", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(requestData),
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(paymentData),
       });
 
       const data = await response.json();
-      if (data.error) {
-        alert("❌ Error al generar URL de pago: " + data.error);
-      } else if (data.payment_url) {
-        // Redirige al 3DS page de Paycomet
+      
+      if (data.payment_url) {
         window.location.href = data.payment_url;
+
+        await fetch("/api/payments/confirm", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            ...paymentData,
+            paymentUrl: data.payment_url
+          }),
+        });
+        
+        if (onPaymentSuccess) onPaymentSuccess();
       } else {
-        alert("⚠️ No se recibió payment_url");
+        alert("⚠️ No se recibió una URL de pago válida.");
       }
     } catch (error) {
-      console.error("❌ Error en la solicitud de pago", error);
+      console.error("❌ Error en el pago único", error);
       alert("Hubo un problema al iniciar el pago.");
     } finally {
       setLoading(false);
@@ -63,7 +86,7 @@ const PayButton: React.FC<PayButtonProps> = ({
 
   return (
     <Button onClick={handlePayment} isLoading={loading} colorScheme="teal" size="md" width="100%" mt={4}>
-      {paymentType === "one-time" ? "Pagar una vez" : "Suscribirse"}
+      Pagar Ahora
     </Button>
   );
 };

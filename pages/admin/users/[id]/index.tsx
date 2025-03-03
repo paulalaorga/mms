@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/router";
+import { useRouter, useParams } from "next/navigation";
 import {
   Box,
   Heading,
@@ -15,6 +15,8 @@ import {
   FormLabel,
   Grid,
   GridItem,
+  Text,
+  VStack,
 } from "@chakra-ui/react";
 
 interface User {
@@ -25,7 +27,7 @@ interface User {
   phone?: string;
   email: string;
   role: string;
-  groupLevel: "Fundamental" | "Avanzado" | "VIP";
+  groupLevel: "Fundamental" | "Avanzado";
   contractSigned: "Sí" | "No"; // ✅ Ahora es un select en lugar de un checkbox
   recoveryContact?: string;
   createdAt?: string;
@@ -35,11 +37,17 @@ interface User {
   individualProgram?: boolean;
   nextSessionDate?: string | null;
   provider?: string;
+  programs?: {
+    _id: string;
+    programId: { name: string };
+    purchaseDate: string;
+  }[];
 }
 
 export default function UserDetailPage() {
   const router = useRouter();
-  const { id } = router.query;
+  const params = useParams();
+  const id = params?.id;
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -48,21 +56,15 @@ export default function UserDetailPage() {
 
 
   useEffect(() => {
-    if (!router.isReady || !id || typeof id !== "string") return;
-
-    console.log("🔍 Fetching user with ID:", id);
+    if (!id || typeof id !== "string") return;
 
     const fetchUser = async () => {
       try {
         const res = await fetch(`/api/admin/users/${id}`);
-
-        if (!res.ok) {
-          if (res.status === 404) throw new Error("Usuario no encontrado");
-          throw new Error("Error al cargar el usuario");
-        }
-
         const data = await res.json();
-        console.log("✅ User Data:", data);
+
+        console.log("🔍 Datos del usuario:", JSON.stringify(data, null, 2));
+
         setUser(data);
       } catch (error) {
         console.error("❌ Fetch Error:", error);
@@ -75,7 +77,28 @@ export default function UserDetailPage() {
     };
 
     fetchUser();
-  }, [id, router.isReady]);
+  }, [id]);
+
+
+  const handleDeleteProgram = async (programId: string) => {
+    if (!user) return;
+
+    try {
+      const res = await fetch(`/api/admin/users/${id}/programs/${programId}`, {
+        method: "DELETE",
+      });
+
+      if (!res.ok) throw new Error("Error al eliminar el programa");
+
+      setUser((prevUser) =>
+        prevUser
+          ? { ...prevUser, programs: prevUser?.programs?.filter((p) => p._id !== programId) }
+          : prevUser
+      );
+    } catch (error) {
+      setError(error instanceof Error ? error.message : "Error inesperado al eliminar el programa");
+    }
+  };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     if (!user) return;
@@ -232,17 +255,41 @@ export default function UserDetailPage() {
         </GridItem>
 
         <GridItem>
-          <FormControl>
-            <FormLabel>Nueva Contraseña</FormLabel>
-            <Input
-              type="password"
-              name="newPassword"
-              value={newPassword}
-              onChange={(e) => setNewPassword(e.target.value)}
-              placeholder="Escribe una nueva contraseña"
-            />
-          </FormControl>
-        </GridItem>
+        <FormControl>
+          <FormLabel>Nueva Contraseña</FormLabel>
+          <Input
+            type="password"
+            name="newPassword"
+            value={newPassword}
+            onChange={(e) => setNewPassword(e.target.value)}
+            placeholder="Escribe una nueva contraseña"
+          />
+        </FormControl>
+      </GridItem>
+
+    <GridItem>
+      <Heading size="md" mt={6} mb={2}>Programas Activos</Heading>
+      {user.programs && user.programs.length > 0 ? (
+        <VStack spacing={4} align="stretch">
+          {user.programs.map(({ _id, programId, purchaseDate }) => (
+            <Box key={_id} p={4} borderWidth="1px" borderRadius="md">
+              <Text fontSize="lg" fontWeight="bold">{programId.name}</Text>
+              <Text fontSize="sm" color="gray.500">Fecha de compra: {new Date(purchaseDate).toLocaleDateString()}</Text>
+              <Button
+                colorScheme="red"
+                size="sm"
+                mt={2}
+                onClick={() => handleDeleteProgram(_id)}
+              >
+                Eliminar Programa
+              </Button>
+            </Box>
+          ))}
+        </VStack>
+      ) : (
+        <Text color="gray.500">Este usuario no tiene programas activos.</Text>
+      )}
+    </GridItem>
       </Grid>
 
       <Button mt={6} colorScheme="blue" onClick={handleSave} isLoading={saving}>

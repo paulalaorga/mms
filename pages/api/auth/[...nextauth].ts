@@ -78,6 +78,7 @@ export const authOptions: AuthOptions = {
         dbUser = await User.create({
           email: user.email,
           name: user.name,
+          surname: user.surname,
           role: "user", // Asignar un rol predeterminado (puedes modificarlo según lo que necesites)
           isConfirmed: true, // Si quieres permitir acceso directo
         });
@@ -97,6 +98,9 @@ export const authOptions: AuthOptions = {
         if (dbUser) {
           token.id = dbUser._id.toString(); // Asigna el ID de MongoDB correctamente
           token.role = dbUser.role;
+          token.name = dbUser.name;
+          token.surname = dbUser.surname;
+          token.email = dbUser.email;
         }
       }
     
@@ -113,8 +117,8 @@ export const authOptions: AuthOptions = {
         session.user = {
           id: token.id, // Aquí aseguramos que se pase el ID de MongoDB
           name: token.name ?? session.user.name,
+          surname: token.surname ?? session.user.surname,
           email: token.email ?? session.user.email,
-          picture: token.picture ?? session.user.picture,
           role: token.role ?? "user",
         };
       }

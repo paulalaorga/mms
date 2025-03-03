@@ -1,11 +1,26 @@
 // services/paycomet.ts
 
-export const payWithPaycomet = async (amount: number, orderId: string) => {
+export const payWithPaycomet = async (
+  amount: number, 
+  orderId: string,
+  paymentType: "one-time" | "subscription",
+  periodicity?: "monthly" | "weekly",
+  duration?: number,
+) => {
   try {
-    const response = await fetch("/api/paycomet", {
+
+    const endpoint = paymentType === "one-time" ? "/api/paycomet/onepayment" : "/api/paycomet/subscribe";
+
+    const response = await fetch(endpoint, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ amount, orderId }),
+      body: JSON.stringify({ 
+        amount, 
+        orderId,
+        paymentType,
+        periodicity,
+        duration, 
+      }),
     });
 
     const data = await response.json();

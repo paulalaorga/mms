@@ -1,54 +1,61 @@
-import mongoose, { Schema, Document } from "mongoose";
+import mongoose, { Schema,Types, Document } from "mongoose";
 
-// Interfaz para cada opción de precio
-export interface IPricingOption {
-  period: "monthly" | "yearly" | "weekly";
+
+export interface IPaymentOption {
+  type: "one-time" | "subscription";
   price: number;
-  billingCycles?: number;
+  subscriptionDetails?: {
+    duration: number;
+    renewalPeriod: "monthly" | "yearly";
+  };
 }
 
 // Interfaz del programa
 export interface IProgram extends Document {
-  name: string;
+  _id: Types.ObjectId;
+  programName: string;
   description: string;
-  groupLevel: "Fundamental" | "Avanzado" | "VIP";
-  paymentType: "subscription" | "one-time";
-  suscriptionDetails?: {
-    periodicity: "monthly" | "weekly" | "yearly";
-    duration: number;
-  };
-  pricingOptions?: IPricingOption[];
-  paymentOptions: string[];
+  groupLevel: "Fundamental" | "Avanzado";
+  paymentOptions: IPaymentOption[];
   hasIndividualSessions?: boolean;
-  individualSession?: number;
+  individualSessionQuantity?: number;
+  individualSession?: Types.ObjectId;
+  totalUsers: number;
+  activeUsers: number;
+  createdAt: Date;
 }
 
-// Esquema para cada opción de precio
-const PricingOptionSchema = new Schema<IPricingOption>({
-  period: { type: String, enum: ["monthly", "yearly", "weekly"], required: true },
-  price: { type: Number, required: true },
-  billingCycles: { type: Number },
-});
 
 // Esquema principal del programa
 const ProgramSchema = new Schema<IProgram>({
-  name: { type: String, required: true },
+  _id: { type: Schema.Types.ObjectId, auto: true },
+  programName: { type: String, required: true },
   description: { type: String, required: true },
   groupLevel: { type: String, enum: ["Fundamental", "Avanzado"], required: true },
-  paymentType: { type: String, enum: ["subscription", "one-time"], required: true },
-  suscriptionDetails: {
-    periodicity: { type: String, enum: ["monthly", "weekly", "yearly"] },
-    duration: { type: Number },
+  paymentOptions: {
+    required: true,
+    default: [],
+    type: [
+      {
+        type: { type: String, enum: ["one-time", "subscription"], required: true },
+        price: { type: Number, required: true },
+        subscriptionDetails: {
+          duration: { type: Number, required: function () { return this.type === "subscription"; } },
+          renewalPeriod: { type: String, enum: ["monthly", "yearly"], required: function () { return this.type === "subscription"; } },
+        },
+      },
+],
   },
-  pricingOptions: { type: [PricingOptionSchema], default: [] },
-  paymentOptions: { type: [String], default: [] },
   hasIndividualSessions: { type: Boolean, default: false },
-  individualSession: { type: Number, default: undefined },
+  individualSessionQuantity: { type: Number, default: 0 },
+  individualSession: { type: Schema.Types.ObjectId, ref: "Session", default: null },
+  totalUsers: { type: Number, default: 0 },
+  activeUsers: { type: Number, default: 0 },
+  createdAt: { type: Date, default: Date.now },
+}, {
+  timestamps: true,
 });
 
-// Forzamos la recompilación del modelo si ya existe
-if (mongoose.models.Program) {
-  delete mongoose.models.Program;
-}
 
-export default mongoose.model<IProgram>("Program", ProgramSchema);
+
+export default mongoose.models.Program || mongoose.model<IProgram>("Program", ProgramSchema);

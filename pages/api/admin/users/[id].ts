@@ -1,6 +1,7 @@
 import { NextApiRequest, NextApiResponse } from "next";
 import dbConnect from "@/lib/mongodb";
 import User from "@/models/User";
+import PurchasedProgram from "@/models/Purchase";
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   await dbConnect();
@@ -11,12 +12,31 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(400).json({ error: "ID de usuario inválido" });
   }
 
-  try {
-    if (req.method === "GET") {
-      const user = await User.findById(id);
+
+  if (req.method === "GET") {
+    try {
+
+      if(!PurchasedProgram) {
+        throw new Error("❌ Error: No se encontraron programas comprados");
+      }
+
+      const user = await User.findById(id)
+        .populate({
+          path: "programs",
+          populate: { path: "programId" },
+        })
+        .lean();
+
       if (!user) return res.status(404).json({ error: "Usuario no encontrado" });
+
+      console.log("🔍 Usuario encontrado", JSON.stringify(user, null,2));
+
       return res.status(200).json(user);
+    } catch (error) {
+      console.error("❌ Error en la API de usuarios:", error);
+      return res.status(500).json({ error: "Error interno del servidor" });
     }
+  }
 
     if (req.method === "PUT") {
       console.log("📩 Recibiendo actualización de usuario:", req.body);
@@ -52,8 +72,4 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
 
     return res.status(405).json({ error: "Método no permitido" });
-  } catch (error) {
-    console.error("❌ Error en la API de usuarios:", error);
-    return res.status(500).json({ error: "Error interno del servidor" });
   }
-};

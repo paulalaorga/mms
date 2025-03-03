@@ -19,11 +19,12 @@ export interface IUser extends Document {
   isPatient?: boolean;
   groupProgramPaid?: boolean;
   individualProgram?: boolean;
-  nextSessionDate?: string | null;
   provider?: string;
-  activeSubscription?: Types.ObjectId;
+  subscription?: Types.ObjectId;
   idUser?: string;
   tokenUser?: string;
+  programs?: Types.ObjectId[];
+  groupLevel?: string; 
 }
 
 const UserSchema = new Schema<IUser>({
@@ -45,15 +46,21 @@ const UserSchema = new Schema<IUser>({
   isPatient: { type: Boolean, default: false },
   groupProgramPaid: { type: Boolean, default: false },
   individualProgram: { type: Boolean, default: false },
-  nextSessionDate: { type: String, default: null },
   provider: { type: String },
-  activeSubscription: {
+  subscription: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "Subscription",
     default: null,
   },
   idUser: { type: String, default: null },
   tokenUser: { type: String, default: null },
+  programs: [
+    {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "PurchasedProgram",
+    },
+  ],
+  groupLevel: { type: String, default: "Fundamental" },
 }, {
   timestamps: true,
 }

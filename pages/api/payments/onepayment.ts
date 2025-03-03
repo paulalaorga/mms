@@ -1,7 +1,6 @@
-// pages/api/paycomet/form-initialize.ts
+
 import type { NextApiRequest, NextApiResponse } from "next";
 import axios from "axios";
-import mongoose from "mongoose";
 import { authOptions } from "../auth/[...nextauth]"; // Ajusta la ruta si difiere
 import connectDB from "@/lib/mongodb"; // Donde guardaste el helper
 import UserModel from "@/models/User";
@@ -42,28 +41,19 @@ export default async function handler(
 
   try {
     // 4) Leemos las props del body
-    const { userId, amount, orderId, programId } = req.body;
-    if (!userId || !amount || !orderId || !programId) {
+    const { _id, userId, amount, orderId, programName } = req.body;
+    if (!userId || !amount || !orderId ) {
       return res.status(400).json({
         error:
           "El monto (amount), la orden (order) y el programa (programId) son obligatorios.",
       });
     }
 
-    console.log("🔹 Datos recibidos en `form-initialize.ts`:", req.body);
+    console.log("🔹 Datos recibidos en `onepayment.ts`:", req.body);
 
-    if (!mongoose.Types.ObjectId.isValid(programId)) {
-      return res.status(400).json({ error: "El programId no es válido." });
-    }
-    const programObjectId = mongoose.isValidObjectId(programId)
-      ? new mongoose.Types.ObjectId(programId)
-      : null;
+  
 
-    if (!programObjectId) {
-      return res.status(400).json({ error: "El programId no es válido." });
-    }
-
-    const program = await Program.findById(programObjectId);
+    const program = await Program.findById(_id);
     if (!program) {
       console.log("❌ Programa no encontrado en la base de datos.");
       return res.status(400).json({ error: "El programa no existe." });
@@ -109,7 +99,7 @@ export default async function handler(
         userInteraction: 1,
         trxType: "",
         scaException: "",
-        urlOk: PAYCOMET_URL_OK,
+        urlOk: `${PAYCOMET_URL_OK}?userId=${userId}&programId=${_id}&paymentId=${orderId}&programName=${encodeURIComponent(programName)}`,
         urlKo: PAYCOMET_URL_KO,
         tokenize: 0,
         merchantData: {},
@@ -117,7 +107,7 @@ export default async function handler(
     };
 
     console.log("🔹 Payload a Paycomet:", payload);
-    console.log("📩 Datos recibidos en `form-initialize.ts`:", req.body);
+    console.log("📩 Datos recibidos en `onepayment.ts`:", req.body);
 
     // 9) Llamamos a la API de Paycomet para iniciar el proceso de pago
     try {
@@ -144,10 +134,11 @@ export default async function handler(
       });
     }
   } catch (error) {
-    console.error("❌ Error general en form-initialize:", error);
+    console.error("❌ Error general en pago único:", error);
     return res.status(500).json({
       error: "Error general en el servidor",
       details: error instanceof Error ? error.message : "Error desconocido",
     });
   }
 }
+
