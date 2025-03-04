@@ -17,6 +17,7 @@ export interface IProgram extends Document {
   description: string;
   groupLevel: "Fundamental" | "Avanzado";
   paymentOptions: IPaymentOption[];
+  expirationDate?: Date;
   hasIndividualSessions?: boolean;
   individualSessionQuantity?: number;
   individualSession?: Types.ObjectId;
@@ -46,6 +47,7 @@ const ProgramSchema = new Schema<IProgram>({
       },
 ],
   },
+  expirationDate: { type: Date, default: null },
   hasIndividualSessions: { type: Boolean, default: false },
   individualSessionQuantity: { type: Number, default: 0 },
   individualSession: { type: Schema.Types.ObjectId, ref: "Session", default: null },

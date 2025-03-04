@@ -21,9 +21,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     // 🔹 Buscar al usuario con los programas poblados
     const user: IUser | null = await User.findOne({ email: session.user.email })
       .populate({
-        path: "programs",
+        path: "purchases",
         model: "PurchasedProgram",
-        populate: { path: "programId", model: "Program", select: "name description" },
+        populate: { path: "_id", model: "Program", select: "name description" },
       });
 
     if (!user) {
@@ -32,19 +32,19 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
 
     console.log("✅ Usuario encontrado:", user.email);
-    console.log("🔍 Programas asociados al usuario:", user.programs);
+    console.log("🔍 Programas asociados al usuario:", user.purchases);
 
     // 🔹 Verificar si el usuario tiene programas comprados
     const purchasedPrograms: IPurchasedProgram[] = await PurchasedProgram.find({ userId: user._id })
       .populate({
-        path: "programId",
+        path: "_id",
         select: "name description",
       });
 
     console.log("✅ Programas comprados obtenidos:", purchasedPrograms.length);
 
     // 🔹 Obtener los IDs de los programas comprados
-    const userProgramIds = purchasedPrograms.map((p) => p.programId);
+    const userProgramIds = purchasedPrograms.map((p) => p._id);
 
     console.log("🔹 IDs de programas comprados:", userProgramIds);
 

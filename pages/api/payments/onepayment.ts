@@ -41,7 +41,9 @@ export default async function handler(
 
   try {
     // 4) Leemos las props del body
-    const { _id, userId, amount, orderId, programName } = req.body;
+    const { _id, userId, amount, orderId, programName, userName } = req.body;
+
+    const order = orderId;
     if (!userId || !amount || !orderId ) {
       return res.status(400).json({
         error:
@@ -89,17 +91,17 @@ export default async function handler(
         terminal: Number(TERMINAL),
         methods: [], // Según la documentación se espera un array vacío
         excludedMethods: [],
-        order: orderId, // Renombramos "orderId" a "order"
+        order, 
         amount: Math.round(amount * 100).toString(), // Convertimos a céntimos
         currency: "EUR",
         secure: 1,
         scoring: "0",
-        productDescription: `Pago de ${amount}€ para la orden ${orderId} de ${userEmail}`,
+        productDescription: `Pago de ${amount}€ para la orden ${order} de ${userEmail}`,
         merchantDescriptor: "",
         userInteraction: 1,
         trxType: "",
         scaException: "",
-        urlOk: `${PAYCOMET_URL_OK}?userId=${userId}&programId=${_id}&paymentId=${orderId}&programName=${encodeURIComponent(programName)}`,
+        urlOk: `${PAYCOMET_URL_OK}?userId=${userId}&programId=${_id}&orderId=${order}&programName=${encodeURIComponent(programName)}&userName=${encodeURIComponent(userName)}`,
         urlKo: PAYCOMET_URL_KO,
         tokenize: 0,
         merchantData: {},

@@ -2,6 +2,7 @@
 import { NextApiRequest, NextApiResponse } from "next";
 import dbConnect from "@/lib/mongodb";
 import Program from "@/models/Program";
+import mongoose from "mongoose";
 
 export default async function handler(
   req: NextApiRequest,
@@ -12,21 +13,19 @@ export default async function handler(
   try {
     if (req.method === "POST") {
       let {
-        programId,
         programName,
         description,
         groupLevel,
         paymentOptions = [],
         hasIndividualSessions,
         individualSessionQuantity,
+        expirationDate,
       } = req.body;
 
-      if (!programId) {
-        programId = `prog_${Date.now()}`;
-      }
+   
 
       // 🔹 Validaciones básicas
-      if (!programId || !programName || !description || !groupLevel) {
+      if (!programName || !description || !groupLevel || !paymentOptions ||  !expirationDate) {
         return res
           .status(400)
           .json({
@@ -86,7 +85,6 @@ export default async function handler(
       }
 
       const newProgram = new Program({
-        programId,
         programName,
         description,
         groupLevel,
@@ -95,6 +93,7 @@ export default async function handler(
         individualSessionQuantity: hasIndividualSessions
           ? individualSessionQuantity
           : 0,
+        expirationDate: null,
       });
 
       console.log("📝 Guardando en MongoDB:", newProgram);
@@ -118,14 +117,14 @@ export default async function handler(
     }
 
     if (req.method === "DELETE") {
-      const { id } = req.body;
-      if (!id || typeof id !== "string") {
+      const { _id } = req.body;
+      if (!_id || !mongoose.Types.ObjectId.isValid(_id)) {
         return res
           .status(400)
           .json({ error: "El ID del programa es obligatorio." });
       }
 
-      const deletedProgram = await Program.findByIdAndDelete(id);
+      const deletedProgram = await Program.findByIdAndDelete(_id);
 
       if (!deletedProgram) {
         return res.status(404).json({ error: "Programa no encontrado." });

@@ -42,6 +42,8 @@ export default function UserPrograms() {
     setIsLoading(false);
   };
 
+  const userName = session?.user?.name || "Usuario Desconocido"; // Evita errores si es undefined
+
   useEffect(() => {
     if (status === "loading") return;
     if (!session) {
@@ -65,6 +67,8 @@ export default function UserPrograms() {
     await update(); // 🔄 Recargar sesión para asegurarse de que se actualizan los dato
   };
 
+
+
   return (
     <Container maxW="container.lg" py={10}>
       <Heading as="h1" size="xl" textAlign="center" mb={6} color="teal.500">
@@ -83,14 +87,14 @@ export default function UserPrograms() {
             <SimpleGrid columns={{ base: 1, md: 2 }} spacing={6}>
               {purchasedPrograms.map(
                 ({
-                  purchasedProgramId,
+                  purchasePaymentId,
                   programId,
                   programName,
                   description,
                   purchaseDate,
                 }) => (
                   <Card
-                    key={purchasedProgramId}
+                    key={purchasePaymentId}
                     borderWidth="1px"
                     borderRadius="lg"
                     textAlign="center"
@@ -176,7 +180,7 @@ export default function UserPrograms() {
                             {option.type === "one-time" ? (
                               <PayButton
                                 _id={program._id}
-                                userName={session?.user?.name}
+                                userName={userName}
                                 programName={program.programName}
                                 price={option.price}
                                 onPaymentSuccess={handlePaymentSuccess}
@@ -184,7 +188,7 @@ export default function UserPrograms() {
                             ) : option.type === "subscription" ? (
                               <SubscriptionButton
                                 _id={program._id}
-                                userName={session?.user?.name}
+                                userName={userName}
                                 programName={program.programName}
                                 price={option.price}
                                 subscriptionDuration={

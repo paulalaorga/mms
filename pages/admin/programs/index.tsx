@@ -39,6 +39,7 @@ type ProgramType = {
   paymentOptions: PaymentOption[];
   hasIndividualSessions?: boolean;
   individualSessionQuantity?: number | null;
+  expirationDate?: Date | null;
 };
 
 export default function AdminPrograms() {
@@ -52,6 +53,7 @@ export default function AdminPrograms() {
     paymentOptions: [],
     hasIndividualSessions: false,
     individualSessionQuantity: null,
+    expirationDate: null,
   });
 
   const [isEditing, setIsEditing] = useState(false);
@@ -119,10 +121,13 @@ export default function AdminPrograms() {
     });
   };
 
+  const subscriptionOption = form.paymentOptions.find(
+    (option) => option.type === "subscription"
+  );
+
   const handleSubmit = async () => {
     const method = isEditing ? "PUT" : "POST";
     const body = JSON.stringify({
-      programId: form.programId || `prog_${Date.now()}`, // ✅ Generar un programId si no se proporciona
       programName: form.programName,
       description: form.description,
       groupLevel: form.groupLevel,
@@ -130,6 +135,9 @@ export default function AdminPrograms() {
       hasIndividualSessions: form.hasIndividualSessions,
       individualSessionQuantity: form.hasIndividualSessions
         ? form.individualSessionQuantity
+        : null,
+      expirationDate: subscriptionOption?.subscriptionDetails?.duration
+      ? new Date(Date.now() + subscriptionOption.subscriptionDetails.duration * 30 * 24 * 60 * 60 * 1000)
         : null,
     });
 

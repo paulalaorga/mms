@@ -23,7 +23,7 @@ export interface IUser extends Document {
   subscription?: Types.ObjectId;
   idUser?: string;
   tokenUser?: string;
-  programs?: Types.ObjectId[];
+  purchases?: Types.ObjectId[];
   groupLevel?: string; 
 }
 
@@ -54,13 +54,21 @@ const UserSchema = new Schema<IUser>({
   },
   idUser: { type: String, default: null },
   tokenUser: { type: String, default: null },
-  programs: [
+  groupLevel: { type: String, default: "Fundamental" },
+  purchases: [
     {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "PurchasedProgram",
+      purchaseId: {
+        type: mongoose.Schema.Types.ObjectId,
+        required: true,
+        refPath: "purchaseType",
+      },
+      purchaseType: {
+        type: String,
+        required: true,
+        enum: ["PurchasedProgram", "PurchasedSession", "PurchasedVoucher"], // Modelos válidos
+      },
     },
   ],
-  groupLevel: { type: String, default: "Fundamental" },
 }, {
   timestamps: true,
 }

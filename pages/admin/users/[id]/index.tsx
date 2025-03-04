@@ -54,7 +54,6 @@ export default function UserDetailPage() {
   const [saving, setSaving] = useState(false);
   const [newPassword, setNewPassword] = useState(""); // Nuevo estado para la contraseña
 
-
   useEffect(() => {
     if (!id || typeof id !== "string") return;
 
@@ -79,7 +78,6 @@ export default function UserDetailPage() {
     fetchUser();
   }, [id]);
 
-
   const handleDeleteProgram = async (programId: string) => {
     if (!user) return;
 
@@ -92,15 +90,24 @@ export default function UserDetailPage() {
 
       setUser((prevUser) =>
         prevUser
-          ? { ...prevUser, programs: prevUser?.programs?.filter((p) => p._id !== programId) }
+          ? {
+              ...prevUser,
+              programs: prevUser?.programs?.filter((p) => p._id !== programId),
+            }
           : prevUser
       );
     } catch (error) {
-      setError(error instanceof Error ? error.message : "Error inesperado al eliminar el programa");
+      setError(
+        error instanceof Error
+          ? error.message
+          : "Error inesperado al eliminar el programa"
+      );
     }
   };
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+  ) => {
     if (!user) return;
     setUser({ ...user, [e.target.name]: e.target.value });
   };
@@ -108,30 +115,32 @@ export default function UserDetailPage() {
   const handleSave = async () => {
     if (!user) return;
     setSaving(true);
-  
+
     try {
       const updatedUser = {
         ...user,
         isPatient: Boolean(user.isPatient), // 📌 Asegurar booleano
-        contractSigned: user.contractSigned === "Sí" || user.contractSigned === "No"
-          ? user.contractSigned
-          : user.contractSigned === true
-          ? "Sí"
-          : "No", // 📌 Convertir a "Sí"/"No" si es booleano
+        contractSigned:
+          user.contractSigned === "Sí" || user.contractSigned === "No"
+            ? user.contractSigned
+            : user.contractSigned === true
+              ? "Sí"
+              : "No", // 📌 Convertir a "Sí"/"No" si es booleano
       };
-  
+
       // 📌 Enviar la solicitud al backend
       const res = await fetch(`/api/admin/users/${id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(updatedUser),
       });
-  
+
       const responseData = await res.json();
       console.log("🔍 Respuesta de la API:", responseData);
-  
-      if (!res.ok) throw new Error(responseData.error || "Error al actualizar el usuario");
-  
+
+      if (!res.ok)
+        throw new Error(responseData.error || "Error al actualizar el usuario");
+
       console.log("✅ Usuario actualizado");
       setNewPassword(""); // Limpiar campo de contraseña después de guardar
     } catch (error) {
@@ -140,8 +149,6 @@ export default function UserDetailPage() {
       setSaving(false);
     }
   };
-  
-  
 
   if (loading) return <Spinner />;
   if (error)
@@ -161,11 +168,17 @@ export default function UserDetailPage() {
 
   return (
     <Box p={6}>
-      <Box display="flex" flexDirection={{ base: "column", md: "row" }} justifyContent="space-around">
-      <Heading m={4} size="lg" mb={4}>Detalles del Usuario</Heading>
-      <Button colorScheme="gray" onClick={() => router.push("/admin/users")}>
-        ← Volver a la lista de usuarios
-      </Button>
+      <Box
+        display="flex"
+        flexDirection={{ base: "column", md: "row" }}
+        justifyContent="space-around"
+      >
+        <Heading m={4} size="lg" mb={4}>
+          Detalles del Usuario
+        </Heading>
+        <Button colorScheme="gray" onClick={() => router.push("/admin/users")}>
+          ← Volver a la lista de usuarios
+        </Button>
       </Box>
 
       {/* Grid para organizar en dos columnas */}
@@ -180,7 +193,11 @@ export default function UserDetailPage() {
         <GridItem>
           <FormControl>
             <FormLabel>Apellidos</FormLabel>
-            <Input name="surname" value={user.surname || ""} onChange={handleChange} />
+            <Input
+              name="surname"
+              value={user.surname || ""}
+              onChange={handleChange}
+            />
           </FormControl>
         </GridItem>
 
@@ -201,14 +218,22 @@ export default function UserDetailPage() {
         <GridItem>
           <FormControl>
             <FormLabel>Teléfono</FormLabel>
-            <Input name="phone" value={user.phone || ""} onChange={handleChange} />
+            <Input
+              name="phone"
+              value={user.phone || ""}
+              onChange={handleChange}
+            />
           </FormControl>
         </GridItem>
 
         <GridItem>
           <FormControl>
             <FormLabel>Nivel de Grupo</FormLabel>
-            <Select name="groupLevel" value={user.groupLevel} onChange={handleChange}>
+            <Select
+              name="groupLevel"
+              value={user.groupLevel}
+              onChange={handleChange}
+            >
               <option value="Fundamental">Fundamental</option>
               <option value="Avanzado">Avanzado</option>
               <option value="VIP">VIP</option>
@@ -230,7 +255,11 @@ export default function UserDetailPage() {
         <GridItem>
           <FormControl>
             <FormLabel>Contrato firmado</FormLabel>
-            <Select name="contractSigned" value={user.contractSigned} onChange={handleChange}>
+            <Select
+              name="contractSigned"
+              value={user.contractSigned}
+              onChange={handleChange}
+            >
               <option value="Sí">Sí</option>
               <option value="No">No</option>
             </Select>
@@ -240,7 +269,11 @@ export default function UserDetailPage() {
         <GridItem>
           <FormControl>
             <FormLabel>¿Es paciente?</FormLabel>
-            <Select name="isPatient" value={user.isPatient ? "Sí" : "No"} onChange={handleChange}>
+            <Select
+              name="isPatient"
+              value={user.isPatient ? "Sí" : "No"}
+              onChange={handleChange}
+            >
               <option value="Sí">Sí</option>
               <option value="No">No</option>
             </Select>
@@ -250,46 +283,79 @@ export default function UserDetailPage() {
         <GridItem>
           <FormControl>
             <FormLabel>Fecha de Registro</FormLabel>
-            <Input value={user.createdAt ? new Date(user.createdAt).toLocaleDateString() : "No disponible"} isDisabled />
+            <Input
+              value={
+                user.createdAt
+                  ? new Date(user.createdAt).toLocaleDateString()
+                  : "No disponible"
+              }
+              isDisabled
+            />
           </FormControl>
         </GridItem>
 
         <GridItem>
-        <FormControl>
-          <FormLabel>Nueva Contraseña</FormLabel>
-          <Input
-            type="password"
-            name="newPassword"
-            value={newPassword}
-            onChange={(e) => setNewPassword(e.target.value)}
-            placeholder="Escribe una nueva contraseña"
-          />
-        </FormControl>
-      </GridItem>
+          <FormControl>
+            <FormLabel>Nueva Contraseña</FormLabel>
+            <Input
+              type="password"
+              name="newPassword"
+              value={newPassword}
+              onChange={(e) => setNewPassword(e.target.value)}
+              placeholder="Escribe una nueva contraseña"
+            />
+          </FormControl>
+        </GridItem>
 
-    <GridItem>
-      <Heading size="md" mt={6} mb={2}>Programas Activos</Heading>
-      {user.programs && user.programs.length > 0 ? (
-        <VStack spacing={4} align="stretch">
-          {user.programs.map(({ _id, programId, purchaseDate }) => (
-            <Box key={_id} p={4} borderWidth="1px" borderRadius="md">
-              <Text fontSize="lg" fontWeight="bold">{programId.name}</Text>
-              <Text fontSize="sm" color="gray.500">Fecha de compra: {new Date(purchaseDate).toLocaleDateString()}</Text>
-              <Button
-                colorScheme="red"
-                size="sm"
-                mt={2}
-                onClick={() => handleDeleteProgram(_id)}
-              >
-                Eliminar Programa
-              </Button>
-            </Box>
-          ))}
-        </VStack>
-      ) : (
-        <Text color="gray.500">Este usuario no tiene programas activos.</Text>
-      )}
-    </GridItem>
+        <GridItem>
+          <Heading size="md" mt={6} mb={2}>
+            Programas Activos
+          </Heading>
+          {user.purchases && user.purchases.length > 0 ? (
+            <VStack spacing={4} align="stretch">
+              {user.purchases.map(({ _id, purchaseType, purchaseId }) => {
+                // Validar si es un PurchasedProgram y extraer `programName`
+                const isProgram = purchaseType === "PurchasedProgram";
+                const isSession = purchaseType === "PurchasedSession";
+                const isVoucher = purchaseType === "PurchasedVoucher";
+
+                // Extraer información relevante según el tipo de compra
+                const purchase = purchaseId || {}; // Evita error si purchaseId es null
+                const programName = isProgram
+                  ? purchase.programName
+                  : "Compra realizada";
+                const purchaseDate = purchase.purchaseDate
+                  ? new Date(purchase.purchaseDate).toLocaleDateString()
+                  : "Desconocida";
+
+                return (
+                  <Box key={_id} p={4} borderWidth="1px" borderRadius="md">
+                    <Text fontSize="lg" fontWeight="bold">
+                      {programName}
+                    </Text>
+                    <Text fontSize="sm" color="gray.500">
+                      Fecha de compra: {purchaseDate}
+                    </Text>
+                    {isProgram && (
+                      <Button
+                        colorScheme="red"
+                        size="sm"
+                        mt={2}
+                        onClick={() => handleDeleteProgram(_id)}
+                      >
+                        Eliminar Programa
+                      </Button>
+                    )}
+                  </Box>
+                );
+              })}
+            </VStack>
+          ) : (
+            <Text color="gray.500">
+              Este usuario no tiene programas activos.
+            </Text>
+          )}
+        </GridItem>
       </Grid>
 
       <Button mt={6} colorScheme="blue" onClick={handleSave} isLoading={saving}>
