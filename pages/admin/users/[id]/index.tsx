@@ -18,41 +18,22 @@ import {
   Text,
   VStack,
 } from "@chakra-ui/react";
+import { IUser } from "@/models/User";
 
-interface User {
-  _id: string;
-  name: string;
-  surname?: string;
-  dni?: string;
-  phone?: string;
-  email: string;
-  role: string;
-  groupLevel: "Fundamental" | "Avanzado";
-  contractSigned: "Sí" | "No"; // ✅ Ahora es un select en lugar de un checkbox
-  recoveryContact?: string;
-  createdAt?: string;
-  isConfirmed?: boolean;
-  isPatient?: boolean;
-  groupProgramPaid?: boolean;
-  individualProgram?: boolean;
-  nextSessionDate?: string | null;
-  provider?: string;
-  programs?: {
-    _id: string;
-    programId: { name: string };
-    purchaseDate: string;
-  }[];
-}
+
 
 export default function UserDetailPage() {
   const router = useRouter();
   const params = useParams();
   const id = params?.id;
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<IUser | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
   const [newPassword, setNewPassword] = useState(""); // Nuevo estado para la contraseña
+  const [programId, setProgramId] = useState("");
+  const [programName, setProgramName] = useState("");
+  const [programDescription, setProgramDescription] = useState("");
 
   useEffect(() => {
     if (!id || typeof id !== "string") return;
@@ -62,9 +43,13 @@ export default function UserDetailPage() {
         const res = await fetch(`/api/admin/users/${id}`);
         const data = await res.json();
 
-        console.log("🔍 Datos del usuario:", JSON.stringify(data, null, 2));
+        console.log("🔍 Datos del usuario:", data);
+        if (!data || Object.keys(data).length === 0) {
+          throw new Error("Usuario no encontrado");
+        } else { 
 
         setUser(data);
+        }
       } catch (error) {
         console.error("❌ Fetch Error:", error);
         setError(
@@ -78,32 +63,51 @@ export default function UserDetailPage() {
     fetchUser();
   }, [id]);
 
-  const handleDeleteProgram = async (programId: string) => {
-    if (!user) return;
+  const handleAddProgram = async () => {
+    if (!id || !programId || !programName) return;
+    setSaving(true);
 
     try {
-      const res = await fetch(`/api/admin/users/${id}/programs/${programId}`, {
-        method: "DELETE",
+      const res = await fetch(`/api/admin/users/${id}/purchases`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ programId, programName, description: programDescription }),
       });
 
-      if (!res.ok) throw new Error("Error al eliminar el programa");
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || "Error al agregar el programa");
 
-      setUser((prevUser) =>
-        prevUser
-          ? {
-              ...prevUser,
-              programs: prevUser?.programs?.filter((p) => p._id !== programId),
-            }
-          : prevUser
-      );
+      setUser(data.user);
+      setProgramId("");
+      setProgramName("");
+      setProgramDescription("");
     } catch (error) {
-      setError(
-        error instanceof Error
-          ? error.message
-          : "Error inesperado al eliminar el programa"
-      );
+      console.error("❌ Error al agregar programa:", error);
+    } finally {
+      setSaving(false);
     }
   };
+
+  const handleDeleteProgram = async (purchaseId: string) => {
+    if (!id || !purchaseId) return;
+    setSaving(true);
+
+    try {
+      const res = await fetch(`/api/admin/users/[id]/purchases`, {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ purchaseId }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || "Error al eliminar el programa");
+      setUser(data.user);
+    } catch (error) {
+      console.error("❌ Error al eliminar programa:", error);
+    } finally {
+      setSaving(false);
+    }
+  };
+ 
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
@@ -185,9 +189,18 @@ export default function UserDetailPage() {
       <Grid templateColumns={{ base: "1fr", md: "1fr 1fr" }} gap={6}>
         <GridItem>
           <FormControl>
-            <FormLabel>Nombre</FormLabel>
-            <Input name="name" value={user.name} onChange={handleChange} />
-          </FormControl>
+                      <FormLabel htmlFor="name">
+                        Nombre:
+                      </FormLabel>
+                      <Input
+                        id="name"
+                        placeholder="Nombre"
+                        name="name"
+                        value={user.name}
+                        onChange={handleChange}
+                        autoComplete="given-name"
+                      />
+                    </FormControl>
         </GridItem>
 
         <GridItem>
@@ -306,56 +319,39 @@ export default function UserDetailPage() {
             />
           </FormControl>
         </GridItem>
+        <Box p={6}>
 
-        <GridItem>
-          <Heading size="md" mt={6} mb={2}>
-            Programas Activos
-          </Heading>
-          {user.purchases && user.purchases.length > 0 ? (
-            <VStack spacing={4} align="stretch">
-              {user.purchases.map(({ _id, purchaseType, purchaseId }) => {
-                // Validar si es un PurchasedProgram y extraer `programName`
-                const isProgram = purchaseType === "PurchasedProgram";
-                const isSession = purchaseType === "PurchasedSession";
-                const isVoucher = purchaseType === "PurchasedVoucher";
-
-                // Extraer información relevante según el tipo de compra
-                const purchase = purchaseId || {}; // Evita error si purchaseId es null
-                const programName = isProgram
-                  ? purchase.programName
-                  : "Compra realizada";
-                const purchaseDate = purchase.purchaseDate
-                  ? new Date(purchase.purchaseDate).toLocaleDateString()
-                  : "Desconocida";
-
-                return (
-                  <Box key={_id} p={4} borderWidth="1px" borderRadius="md">
-                    <Text fontSize="lg" fontWeight="bold">
-                      {programName}
-                    </Text>
-                    <Text fontSize="sm" color="gray.500">
-                      Fecha de compra: {purchaseDate}
-                    </Text>
-                    {isProgram && (
-                      <Button
-                        colorScheme="red"
-                        size="sm"
-                        mt={2}
-                        onClick={() => handleDeleteProgram(_id)}
-                      >
-                        Eliminar Programa
-                      </Button>
-                    )}
-                  </Box>
-                );
-              })}
-            </VStack>
+      <VStack align="start" spacing={4}>
+        {/* Mostrar programas comprados */}
+        <FormControl>
+          <FormLabel>Programas Comprados</FormLabel>
+          {(user.purchases || []).length > 0 ? (
+            (user.purchases || []).map((purchase) => (
+              <Box key={purchase._id} p={2} borderWidth={1} borderRadius="md">
+                <Text><strong>{purchase.programName}</strong></Text>
+                <Button size="sm" colorScheme="red" onClick={() => handleDeleteProgram(purchase._id)}>
+                  Eliminar
+                </Button>
+              </Box>
+            ))
           ) : (
-            <Text color="gray.500">
-              Este usuario no tiene programas activos.
-            </Text>
+            <Text>No tiene programas comprados</Text>
           )}
-        </GridItem>
+        </FormControl>
+
+        {/* Agregar nuevo programa */}
+        <FormControl>
+          <FormLabel>Agregar nuevo programa</FormLabel>
+          <Input placeholder="ID del Programa" value={programId} onChange={(e) => setProgramId(e.target.value)} />
+          <Input placeholder="Nombre del Programa" value={programName} onChange={(e) => setProgramName(e.target.value)} />
+          <Input placeholder="Descripción del Programa" value={programDescription} onChange={(e) => setProgramDescription(e.target.value)} />
+          <Button colorScheme="blue" onClick={handleAddProgram} isLoading={saving}>
+            Agregar Programa
+          </Button>
+        </FormControl>
+      </VStack>
+    </Box>
+        
       </Grid>
 
       <Button mt={6} colorScheme="blue" onClick={handleSave} isLoading={saving}>

@@ -17,7 +17,7 @@ const PaymentSuccess = () => {
 
   useEffect(() => {
     // ❌ No llamar `confirm.ts` si faltan datos esenciales
-    if (!userId || !programId || !orderId || !programName) {
+    if (!userId || !programId || !orderId || !programName || !userName) {
       console.error("❌ Faltan datos para confirmar el pago.");
       return;
     }

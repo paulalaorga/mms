@@ -13,29 +13,61 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   try {
     await dbConnect();
-    console.log("📩 Datos recibidos en `confirm.ts`:", req.body);
+    console.log("📩 Datos recibidos en `confirm.ts`:", JSON.stringify(req.body, null, 2));
 
-    const { userId, programName, _id, userName, orderId, expirationDate } = req.body;
-    const programId = _id;
+    const {
+      userId,
+      userName,
+      _id: programId,
+      orderId,
+      programName,
+      paymentStatus,
+    } = req.body;
+    
+    console.log("🔍 Verificación de datos individuales:");
+    console.log("  - userId:", userId);
+    console.log("  - userName:", userName);
+    console.log("  - programId:", programId);
+    console.log("  - orderId:", orderId);
+    console.log("  - programName:", programName);
+    console.log("  - paymentStatus:", paymentStatus);
 
-    if (!userId || !programId || !orderId) {
-      console.error("❌ Faltan datos en la solicitud:", req.body);
-      return res.status(400).json({ message: "Faltan datos necesarios" });
+    if (paymentStatus !== "COMPLETED") {
+      return res.status(400).json({ message: "El pago no se ha completado" });
     }
-
+    
+    // 🔍 Validación: Si algún campo es `undefined`, mostrar el error exacto
+    if (!userId || !userName || !programId || !orderId || !programName) {
+      console.error("❌ Faltan datos en la solicitud. Campos recibidos:", JSON.stringify(req.body, null, 2));
+    
+      if (!userId) console.error("❌ userId está ausente o es `undefined`.");
+      if (!userName) console.error("❌ userName está ausente o es `undefined`.");
+      if (!programId) console.error("❌ programId está ausente o es `undefined`.");
+      if (!orderId) console.error("❌ orderId está ausente o es `undefined`.");
+      if (!programName) console.error("❌ programName está ausente o es `undefined`.");
+    
+      return res.status(400).json({ message: "Faltan datos obligatorios" });
+    }
+    
+    // 🔍 Buscar usuario
     const user = await User.findById(userId);
     if (!user) {
       return res.status(404).json({ message: "Usuario no encontrado" });
     }
 
+    // 🔍 Buscar programa
     const program = await Program.findById(programId);
     if (!program) {
       return res.status(400).json({ message: "Programa no encontrado" });
     }
 
-    const expiryDate = expirationDate || null;
+    // 🔍 Verificar si el usuario ya tiene el programa en `PurchasedProgram`
+    const hasProgram = await PurchasedProgram.findOne({ userId, programId });
+    if (hasProgram) {
+      return res.status(400).json({ message: "El usuario ya tiene este programa" });
+    }
 
-    // ✅ Crear la compra con `paymentId`
+    // ✅ Crear la compra
     const purchasedProgram = await PurchasedProgram.create({
       userId,
       userName,
@@ -45,26 +77,24 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       description: program.description || "Sin descripción",
       sessionsIncluded: program.hasIndividualSessions ? program.individualSessionQuantity : 0,
       purchaseDate: new Date(),
-      expiryDate,
-      therapistId: program.therapistId || new mongoose.Types.ObjectId(),
-      meetLink: program.meetLink || "https://meet.google.com/example",
       orderId,
     });
 
-    console.log("✅ Compra guardada en la base de datos con `paymentId`:", paymentId);
+    console.log("🔍 Compra registrada:", purchasedProgram);
 
+    // ✅ Incrementar compras en `Program`
     await Program.findByIdAndUpdate(programId, { $inc: { purchases: 1 } });
 
-    // ✅ Asociar la compra al usuario y actualizar `User.purchases`
+    // ✅ Asociar la compra al usuario correctamente
     user.isPatient = true;
     user.groupProgramPaid = true;
     user.purchases.push({
-      purchaseId: purchasedProgram.purchasedPaymentId, // 🔹 Ahora guardamos `paymentId`
+      purchaseId: new mongoose.Types.ObjectId(purchasedProgram._id),
       purchaseType: "PurchasedProgram",
     });
 
     await user.save();
-    console.log("✅ Usuario actualizado con el nuevo programa:", user.email);
+    console.log("✅ Usuario actualizado con la compra:", user.email);
 
     // ✅ Enviar email de confirmación
     await sendEmail({

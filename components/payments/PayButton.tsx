@@ -8,10 +8,11 @@ interface PayButtonProps {
   userName: string;
   programName: string;
   price: number;
+  expirationDate: Date | undefined;
   onPaymentSuccess?: () => void;
 }
 
-const PayButton: React.FC<PayButtonProps> = ({ _id, userName, programName, price, onPaymentSuccess }) => {
+const PayButton: React.FC<PayButtonProps> = ({ _id, userName, programName, price, expirationDate, onPaymentSuccess }) => {
   const { data: session } = useSession();
   const [loading, setLoading] = useState(false);
 
@@ -38,6 +39,8 @@ const PayButton: React.FC<PayButtonProps> = ({ _id, userName, programName, price
 
       const orderId = orderCounterData.orderId;
 
+      const expirationDate = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000);
+
       const paymentData = {
           _id,
           userId,
@@ -45,6 +48,7 @@ const PayButton: React.FC<PayButtonProps> = ({ _id, userName, programName, price
           programName,
           amount: price,
           orderId,
+          expirationDate,
         };
       console.log("🔹 Datos de pago:", paymentData)
       

@@ -30,17 +30,25 @@ export default function UserPrograms() {
     setIsLoading(true);
     const res = await fetch("/api/user/programs");
     const data = await res.json();
-
+  
     if (data.error) {
       console.error("❌ Error al cargar programas:", data.error);
       setPurchasedPrograms([]);
       setAvailablePrograms([]);
     } else {
-      setPurchasedPrograms(data.purchasedPrograms || []);
-      setAvailablePrograms(data.availablePrograms || []);
+      const purchasedPrograms = data.purchasedPrograms || [];
+      const allPrograms = data.availablePrograms || [];
+  
+      // 🔍 Filtrar los programas disponibles, excluyendo los ya comprados
+      const purchasedProgramIds = new Set(purchasedPrograms.map(p => p.programId));
+      const filteredPrograms = allPrograms.filter(program => !purchasedProgramIds.has(program._id));
+  
+      setPurchasedPrograms(purchasedPrograms);
+      setAvailablePrograms(filteredPrograms); // 🔥 Ahora sí excluye los comprados
     }
     setIsLoading(false);
   };
+  
 
   const userName = session?.user?.name || "Usuario Desconocido"; // Evita errores si es undefined
 
@@ -87,14 +95,14 @@ export default function UserPrograms() {
             <SimpleGrid columns={{ base: 1, md: 2 }} spacing={6}>
               {purchasedPrograms.map(
                 ({
-                  purchasePaymentId,
+                  _id,
                   programId,
                   programName,
                   description,
                   purchaseDate,
                 }) => (
                   <Card
-                    key={purchasePaymentId}
+                    key={_id}
                     borderWidth="1px"
                     borderRadius="lg"
                     textAlign="center"
@@ -183,6 +191,7 @@ export default function UserPrograms() {
                                 userName={userName}
                                 programName={program.programName}
                                 price={option.price}
+                                expirationDate={program.expirationDate}
                                 onPaymentSuccess={handlePaymentSuccess}
                               />
                             ) : option.type === "subscription" ? (

@@ -3,35 +3,27 @@ import mongoose, { Schema, Document, Types } from 'mongoose';
 export interface IPurchasedProgram extends Document {
   orderId: string;
   userId: Types.ObjectId;
-  purchasePaymentId: string;
   programId: Types.ObjectId; // ✅ Vinculamos con `Program`
   programName: string; // ✅ Nombre del programa
   groupLevel: string; // ✅ Nivel del programa
   description: string; // ✅ Descripción del programa
   purchaseDate: Date;
   expiryDate: Date;
-  meetLink: string;
-  whatsAppLink: string;
-  therapistId: Types.ObjectId;
 }
 
 const PurchasedProgramSchema = new Schema<IPurchasedProgram>({
   orderId: { type: String, required: true },
   userId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
-  purchasePaymentId: { type: String, required: true, unique: true },
   programId: { type: Schema.Types.ObjectId, ref: 'Program', required: true }, // ✅ Relación con `Program`
   programName: { type: String, required: true }, // ✅ Nombre del programa
   description: { type: String, required: true }, // ✅ Descripción del programa
   purchaseDate: { type: Date, default: Date.now },
   expiryDate: { type: Date, default: null },
-  meetLink: { type: String, required: true },
-  whatsAppLink: { type: String, required: true },
-  therapistId: { type: Schema.Types.ObjectId, ref: 'Therapist', required: true }
 });
 
 export default mongoose.models.PurchasedProgram || mongoose.model<IPurchasedProgram>('PurchasedProgram', PurchasedProgramSchema);
 
-export interface IPurchasedSession extends Document {
+/* export interface IPurchasedSession extends Document {
   purchasePaymentId: string;
   userId: Types.ObjectId;
   sessionId: Types.ObjectId; // ✅ Vinculamos con `Session`
@@ -86,3 +78,4 @@ const PurchasedVoucherSchema = new Schema<IPurchasedVoucher>({
 export const PurchasedVoucher = mongoose
   .models.PurchasedVoucher || mongoose.model<IPurchasedVoucher>('PurchasedVoucher', PurchasedVoucherSchema);
 
+ */

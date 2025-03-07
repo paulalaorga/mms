@@ -96,7 +96,7 @@ export default async function handler(
         currency: "EUR",
         secure: 1,
         scoring: "0",
-        productDescription: `Pago de ${amount}€ para la orden ${order} de ${userEmail}`,
+        productDescription: `Pago de ${userEmail}`,
         merchantDescriptor: "",
         userInteraction: 1,
         trxType: "",

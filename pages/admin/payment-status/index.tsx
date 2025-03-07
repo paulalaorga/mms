@@ -215,11 +215,10 @@ export default function PaymentStatus() {
         <Text>No hay pagos disponibles.</Text>
       )}
       {paymentsList.length > 0 && (
-        <Table variant="simple" size="sm">
+        <Table variant="simple" size="md">
           <Thead>
             <Tr>
               <Th>Nº de Orden</Th>
-              <Th>ID de Paycomet</Th>
               <Th>Cantidad</Th>
               <Th>Asunto</Th>
               <Th>Estado</Th>
@@ -230,7 +229,6 @@ export default function PaymentStatus() {
             {paymentsList.map((payment) => (
               <Tr key={payment.paymentId}>
                 <Td>{payment.orderId}</Td>
-                <Td>{payment.paycometId}</Td>
                 <Td>{payment.amount}€</Td>
                 <Td>{payment.productDescription}</Td>
                 <Td>{payment.status}</Td>
