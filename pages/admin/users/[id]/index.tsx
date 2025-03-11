@@ -113,7 +113,10 @@ export default function UserDetailPage() {
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
   ) => {
     if (!user) return;
-    setUser({ ...user, [e.target.name]: e.target.value });
+    setUser({
+      ...user,
+      [e.target.name]: e.target.value
+    } as IUser);
   };
 
   const handleSave = async () => {
@@ -125,7 +128,7 @@ export default function UserDetailPage() {
         ...user,
         isPatient: Boolean(user.isPatient), // 📌 Asegurar booleano
         contractSigned:
-          user.contractSigned === "Sí" || user.contractSigned === "No"
+          typeof user.contractSigned === 'string'
             ? user.contractSigned
             : user.contractSigned === true
               ? "Sí"
@@ -270,7 +273,7 @@ export default function UserDetailPage() {
             <FormLabel>Contrato firmado</FormLabel>
             <Select
               name="contractSigned"
-              value={user.contractSigned}
+              value={user.contractSigned ? "Sí" : "No"}
               onChange={handleChange}
             >
               <option value="Sí">Sí</option>
@@ -327,9 +330,9 @@ export default function UserDetailPage() {
           <FormLabel>Programas Comprados</FormLabel>
           {(user.purchases || []).length > 0 ? (
             (user.purchases || []).map((purchase) => (
-              <Box key={purchase._id} p={2} borderWidth={1} borderRadius="md">
-                <Text><strong>{purchase.programName}</strong></Text>
-                <Button size="sm" colorScheme="red" onClick={() => handleDeleteProgram(purchase._id)}>
+              <Box key={purchase.purchaseId.toString()} p={2} borderWidth={1} borderRadius="md">
+                <Text><strong>{purchase.purchaseType}</strong></Text>
+                <Button size="sm" colorScheme="red" onClick={() => handleDeleteProgram(purchase.purchaseId.toString())}>
                   Eliminar
                 </Button>
               </Box>

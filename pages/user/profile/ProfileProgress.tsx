@@ -3,18 +3,29 @@
 import { useSession } from "next-auth/react";
 import { useEffect, useState } from "react";
 import {
-  Container,
-  Alert,
   Progress,
-  AlertIcon,
   Box,
-  Link as ChakraLink,
+  Flex,
+  Icon,
+  Button,
+  Badge,
+  useColorModeValue
 } from "@chakra-ui/react";
+
+import { FaExclamationTriangle, FaUser } from "react-icons/fa";
+import NextLink from "next/link";
+import Text from "@/components/ui/Text";
 
 export default function ProfileProgress() {
   const { data: session, status } = useSession();
   const [completionPercentage, setCompletionPercentage] = useState(0);
   const [missingFields, setMissingFields] = useState<string[]>([]);
+
+  const boxBg = useColorModeValue("white", "gray.800");
+  const progressTrackBg = useColorModeValue("gray.100", "gray.700");
+  const progressFilledBg = useColorModeValue("teal.500", "teal.300");
+  const progressTextColor = useColorModeValue("gray.600", "gray.300");
+  const badgeColor = useColorModeValue("orange.500", "orange.300");
 
   useEffect(() => {
     if (!session?.user?.email) return;
@@ -78,25 +89,100 @@ export default function ProfileProgress() {
   if (completionPercentage === 100) return null;
 
   return (
-    <Container centerContent>
+    <Box w="100%" maxW="800px" mx="auto" mb={6}>
       {completionPercentage < 100 && (
-        <Box w="100%" textAlign="center">
-          <Alert status="warning" mt={4}>
-            <AlertIcon />
-            Tu perfil está incompleto, faltan los siguientes datos:{" "}
-            {missingFields.join(", ")}
-          </Alert>
-          <Progress mt={2} colorScheme="orange" value={completionPercentage} />
-          <ChakraLink
+        <Box 
+          bg={boxBg} 
+          borderRadius="lg" 
+          p={4} 
+          boxShadow="md"
+          border="1px" 
+          borderColor="gray.200"
+        >
+          {/* Encabezado */}
+          <Flex align="space-evenly" mb={3}>
+            <Icon 
+              as={FaExclamationTriangle} 
+              color="orange.500" 
+              boxSize={5} 
+              mr={2} 
+            />
+            <Text fontWeight="bold" fontSize="lg">
+              Perfil incompleto
+            </Text>
+            <Badge 
+              ml="auto" 
+              bg={badgeColor} 
+              colorScheme="orange"
+              borderRadius="full" 
+              px={2}
+              alignContent="center"
+            >
+              {completionPercentage.toFixed(0)}% completado
+            </Badge>
+          </Flex>
+          
+          {/* Barra de progreso */}
+          <Box mb={4}>
+            <Progress 
+              value={completionPercentage} 
+              size="md" 
+              borderRadius="full" 
+              colorScheme="teal"
+              bg={progressTrackBg}
+              sx={{
+                "& > div": {
+                  background: progressFilledBg,
+                  transition: "width 0.5s ease-in-out"
+                }
+              }}
+            />
+            <Flex justify="space-between" mt={1}>
+              <Text fontSize="xs" color={progressTextColor}>0%</Text>
+              <Text fontSize="xs" color={progressTextColor}>100%</Text>
+            </Flex>
+          </Box>
+          
+          {/* Campos faltantes */}
+          <Box mb={4}>
+            <Text fontSize="sm" mb={2}>
+              Te faltan {missingFields.length} campos por completar:
+            </Text>
+            <Flex flexWrap="wrap" gap={2}>
+              {missingFields.map(field => (
+                <Badge 
+                  key={field} 
+                  py={1} 
+                  px={2} 
+                  borderRadius="md" 
+                  colorScheme="red"
+                  variant="subtle"
+                >
+                  {field}
+                </Badge>
+              ))}
+            </Flex>
+          </Box>
+          
+          {/* Botón de acción */}
+          <Button
+            as={NextLink}
             href="/user/profile"
+            colorScheme="teal"
+            leftIcon={<FaUser />}
+            size="md"
+            w="full"
             mt={2}
-            color="blue.500"
-            fontWeight="bold"
+            _hover={{
+              transform: "translateY(-2px)",
+              boxShadow: "lg",
+            }}
+            transition="all 0.2s"
           >
-            Completa tu perfil
-          </ChakraLink>
+            Completar mi perfil
+          </Button>
         </Box>
       )}
-    </Container>
+    </Box>
   );
 }

@@ -23,7 +23,7 @@ const PurchasedProgramSchema = new Schema<IPurchasedProgram>({
 
 export default mongoose.models.PurchasedProgram || mongoose.model<IPurchasedProgram>('PurchasedProgram', PurchasedProgramSchema);
 
-/* export interface IPurchasedSession extends Document {
+ export interface IPurchasedSession extends Document {
   purchasePaymentId: string;
   userId: Types.ObjectId;
   sessionId: Types.ObjectId; // ✅ Vinculamos con `Session`
@@ -78,4 +78,4 @@ const PurchasedVoucherSchema = new Schema<IPurchasedVoucher>({
 export const PurchasedVoucher = mongoose
   .models.PurchasedVoucher || mongoose.model<IPurchasedVoucher>('PurchasedVoucher', PurchasedVoucherSchema);
 
- */
+ 

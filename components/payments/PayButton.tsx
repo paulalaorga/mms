@@ -12,7 +12,7 @@ interface PayButtonProps {
   onPaymentSuccess?: () => void;
 }
 
-const PayButton: React.FC<PayButtonProps> = ({ _id, userName, programName, price, expirationDate, onPaymentSuccess }) => {
+const PayButton: React.FC<PayButtonProps> = ({ _id, userName, programName, price, onPaymentSuccess }) => {
   const { data: session } = useSession();
   const [loading, setLoading] = useState(false);
 

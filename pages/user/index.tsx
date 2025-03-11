@@ -5,15 +5,16 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import {
   Container,
-  Heading,
-  Text,
   VStack,
   Spinner,
   Alert,
   AlertIcon,
   Box,
   Progress,
+  Flex,
+  Avatar
 } from "@chakra-ui/react";
+import Text from "@/components/ui/Text";
 import { IUser } from "@/models/User";
 import { IPurchasedProgram } from "@/models/Purchase"; // ✅ Importamos la interfaz, no el modelo
 import UserLayout from "@/components/layout/UserLayout";
@@ -76,10 +77,6 @@ export default function UserDashboard() {
     fetchUserData();
     fetchProgramData();
 
-    console.log("🔹 Datos de sesión:", session);
-    console.log("🔹 Datos de usuario:", userData);
-    console.log("🔹 Datos de programa:", program);
-
   }, [session]);
 
   useEffect(() => {
@@ -108,57 +105,88 @@ export default function UserDashboard() {
   }
 
   return (
-    <Container centerContent py={10}>
-      <VStack spacing={6} align="center">
+    <Container maxW="container.lg" p={4}>
+      <VStack spacing={6} align="stretch">
         {error && (
           <Alert status="error">
             <AlertIcon />
             {error}
           </Alert>
         )}
+        {/* Cabecera con avatar y bienvenida */}
+        <Flex alignItems="center" mb={6}>
+          <Avatar 
+            size="lg" 
+            bg="teal.500" 
+            color="white"
+            name={`${session.user.name || ""} ${session.user.surname || ""}`}
+            mr={4}
+          />
+          <Box>
+            <Text variant="heading" fontSize="4xl">
+              Bienvenido, {session.user.name || "Usuario"} {session.user.surname || ""} 🎉
+            </Text>
+          </Box>
+        </Flex>
 
-        <Heading size="lg">
-          Bienvenido, {session.user.name || "Usuario"} {session.user.surname} 🎉
-        </Heading>
-        <Text fontSize="lg">Este es tu panel de usuario</Text>
-
-        <Box w="100%" alignContent="center" textAlign="center">
+        {/* Progreso del perfil */}
+        <Box w="100%" mb={6}>
           <ProfileProgress />
         </Box>
 
+        {/* Alerta si no está en ningún programa */}
         {userData && userData.isPatient !== undefined && !userData.isPatient && (
-          <Alert status="info" mt={4}>
+          <Alert status="info" borderRadius="md">
             <AlertIcon />
             No estás registrado en ningún programa. Consulta los programas disponibles en nuestra tienda.
           </Alert>
         )}
 
-
+        {/* Información del programa actual */}
         {program && (
-          <Box w="100%" textAlign="center">
-            <Heading size="lg" m={6}>
-            Tus Programas Actuales
-            </Heading>
-            <Heading size="md" color="teal.600" mb={2}>
-               {program.programName}
-            </Heading>
+          <Box 
+            w="100%" 
+            p={6} 
+            bg="white" 
+            borderRadius="lg" 
+            boxShadow="md" 
+            border="1px"
+            borderColor="gray.200"
+          >
+            <Text size="lg" textAlign="center" mb={6} color="teal.600">
+              Tus Programas Actuales
+            </Text>
+            
+            <Text size="md" color="teal.600" mb={2}>
+              {program.programName}
+            </Text>
+            
             <Text fontSize="sm" mb={3} color="gray.600">
               {program.description}
             </Text>
-            <Text fontSize="sm" color="gray.500">
-              Inicio: {new Date(program.purchaseDate).toLocaleDateString()}
-            </Text>
-            {program.expiryDate && (
+            
+            <Flex justifyContent="space-between" mb={4}>
               <Text fontSize="sm" color="gray.500">
-                Fin: {new Date(program.expiryDate).toLocaleDateString()}
+                Inicio: {new Date(program.purchaseDate).toLocaleDateString()}
               </Text>
-            )}
+              
+              {program.expiryDate && (
+                <Text fontSize="sm" color="gray.500">
+                  Fin: {new Date(program.expiryDate).toLocaleDateString()}
+                </Text>
+              )}
+            </Flex>
 
             <Box w="100%" mt={4}>
               <Text fontSize="lg" fontWeight="bold" mb={2}>
                 Progreso en el programa:
               </Text>
-              <Progress value={progress} colorScheme="teal" size="lg" />
+              <Progress 
+                value={progress} 
+                colorScheme="teal" 
+                size="lg" 
+                borderRadius="md"
+              />
               <Text textAlign="center" mt={2}>
                 {progress.toFixed(2)}% completado
               </Text>

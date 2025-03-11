@@ -18,13 +18,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     console.log("📩 Usuario autenticado:", session.user.email);
 
-    // 🔹 Buscar al usuario con los programas poblados
-    const user: IUser | null = await User.findOne({ email: session.user.email })
-      .populate({
-        path: "purchases",
-        model: "PurchasedProgram",
-        populate: { path: "_id", model: "Program", select: "name description" },
-      });
+    // 🔹 Buscar al usuario y poblar `purchases.purchaseId`
+    const user: IUser | null = await User.findOne({ email: session.user.email }).populate({
+      path: "purchases.purchaseId",
+      model: PurchasedProgram,
+      populate: { path: "programId", model: Program, select: "name description" },
+    });
 
     if (!user) {
       console.error("❌ Usuario no encontrado en la BD.");
@@ -32,19 +31,23 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
 
     console.log("✅ Usuario encontrado:", user.email);
+
+    // ✅ **Verificar si `purchases` tiene datos**
+    if (!user.purchases || user.purchases.length === 0) {
+      return res.status(200).json({ purchasedPrograms: [], availablePrograms: [] });
+    }
+
     console.log("🔍 Programas asociados al usuario:", user.purchases);
 
-    // 🔹 Verificar si el usuario tiene programas comprados
-    const purchasedPrograms: IPurchasedProgram[] = await PurchasedProgram.find({ userId: user._id })
-      .populate({
-        path: "_id",
-        select: "name description",
-      });
+    // 🔹 Obtener los programas comprados correctamente
+    const purchasedPrograms: IPurchasedProgram[] = user.purchases
+      .filter(p => p.purchaseType === "PurchasedProgram" && p.purchaseId)
+      .map(p => p.purchaseId as unknown as IPurchasedProgram); // ✅ Convertir a `IPurchasedProgram`
 
     console.log("✅ Programas comprados obtenidos:", purchasedPrograms.length);
 
     // 🔹 Obtener los IDs de los programas comprados
-    const userProgramIds = purchasedPrograms.map((p) => p._id);
+    const userProgramIds = purchasedPrograms.map(p => p.programId?._id);
 
     console.log("🔹 IDs de programas comprados:", userProgramIds);
 

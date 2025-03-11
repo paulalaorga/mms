@@ -3,8 +3,8 @@ import dbConnect from "@/lib/mongodb";
 import User from "@/models/User";
 import Program from "@/models/Program";
 import PurchasedProgram from "@/models/Purchase";
-import sendEmail from "@/utils/sendEmail";
-import mongoose from "mongoose";
+import PurchasedSession from "@/models/Purchase";
+import PurchasedVoucher from "@/models/Purchase";
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== "POST") {
@@ -17,102 +17,128 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     const {
       userId,
-      userName,
-      _id: programId,
       orderId,
-      programName,
+      amount,
+      currency,
+      response,
+      authCode,
+      signature,
       paymentStatus,
+      purchaseType,
+      programId,
+      programName,
+      sessionId,
+      sessionName,
+      sessionDate,
+      meetLink,
+      therapistId,
+      voucherId,
+      voucherName,
+      description,
+      sessionsQuantity,
     } = req.body;
-    
-    console.log("🔍 Verificación de datos individuales:");
-    console.log("  - userId:", userId);
-    console.log("  - userName:", userName);
-    console.log("  - programId:", programId);
-    console.log("  - orderId:", orderId);
-    console.log("  - programName:", programName);
-    console.log("  - paymentStatus:", paymentStatus);
 
-    if (paymentStatus !== "COMPLETED") {
-      return res.status(400).json({ message: "El pago no se ha completado" });
+    // ❌ Verificar si faltan datos
+    if (!userId || !orderId || !amount || !currency || !response || !authCode || !signature || !paymentStatus || !purchaseType) {
+      return res.status(400).json({ error: "Faltan datos obligatorios en la confirmación de pago" });
     }
-    
-    // 🔍 Validación: Si algún campo es `undefined`, mostrar el error exacto
-    if (!userId || !userName || !programId || !orderId || !programName) {
-      console.error("❌ Faltan datos en la solicitud. Campos recibidos:", JSON.stringify(req.body, null, 2));
-    
-      if (!userId) console.error("❌ userId está ausente o es `undefined`.");
-      if (!userName) console.error("❌ userName está ausente o es `undefined`.");
-      if (!programId) console.error("❌ programId está ausente o es `undefined`.");
-      if (!orderId) console.error("❌ orderId está ausente o es `undefined`.");
-      if (!programName) console.error("❌ programName está ausente o es `undefined`.");
-    
-      return res.status(400).json({ message: "Faltan datos obligatorios" });
+
+    if (paymentStatus !== "success") {
+      console.log("❌ El pago no se ha completado:", paymentStatus);
+      return res.status(400).json({ error: "El pago no se ha completado." });
     }
-    
-    // 🔍 Buscar usuario
+
+    // 🔍 Verificar que el usuario existe
     const user = await User.findById(userId);
     if (!user) {
+      console.error("❌ Usuario no encontrado:", userId);
       return res.status(404).json({ message: "Usuario no encontrado" });
     }
 
-    // 🔍 Buscar programa
-    const program = await Program.findById(programId);
-    if (!program) {
-      return res.status(400).json({ message: "Programa no encontrado" });
+    let newPurchase;
+
+    // 🎯 **Caso 1: Compra de un programa**
+    if (purchaseType === "PurchasedProgram") {
+      const program = await Program.findById(programId);
+      if (!program) {
+        return res.status(400).json({ message: "Programa no encontrado" });
+      }
+
+      newPurchase = await PurchasedProgram.create({
+        orderId,
+        userId,
+        programId,
+        programName,
+        description: program.description || "Sin descripción",
+        groupLevel: program.groupLevel || "Nivel no especificado",
+        purchaseDate: new Date(),
+        expiryDate: null, // 🔹 Puede ser null o definir caducidad
+      });
+
+      console.log("✅ Programa comprado:", newPurchase);
     }
 
-    // 🔍 Verificar si el usuario ya tiene el programa en `PurchasedProgram`
-    const hasProgram = await PurchasedProgram.findOne({ userId, programId });
-    if (hasProgram) {
-      return res.status(400).json({ message: "El usuario ya tiene este programa" });
+    // 🎯 **Caso 2: Compra de una sesión individual**
+    else if (purchaseType === "session") {
+      if (!sessionId || !sessionName || !sessionDate || !therapistId || !meetLink) {
+        return res.status(400).json({ error: "Faltan datos para la sesión individual" });
+      }
+
+      newPurchase = await PurchasedSession.create({
+        purchasePaymentId: orderId,
+        userId,
+        sessionId,
+        sessionName,
+        sessionDate,
+        meetLink,
+        therapistId,
+      });
+
+      console.log("✅ Sesión individual comprada:", newPurchase);
     }
 
-    // ✅ Crear la compra
-    const purchasedProgram = await PurchasedProgram.create({
-      userId,
-      userName,
-      programId,
-      programName,
-      groupLevel: program.groupLevel || "Nivel no especificado",
-      description: program.description || "Sin descripción",
-      sessionsIncluded: program.hasIndividualSessions ? program.individualSessionQuantity : 0,
-      purchaseDate: new Date(),
-      orderId,
-    });
+    // 🎯 **Caso 3: Compra de un voucher (bono de sesiones)**
+    else if (purchaseType === "voucher") {
+      if (!voucherId || !voucherName || !description || !therapistId || !sessionsQuantity) {
+        return res.status(400).json({ error: "Faltan datos para el voucher" });
+      }
 
-    console.log("🔍 Compra registrada:", purchasedProgram);
+      newPurchase = await PurchasedVoucher.create({
+        purchasePaymentId: orderId,
+        userId,
+        voucherId,
+        voucherName,
+        description,
+        purchaseDate: new Date(),
+        meetLink,
+        therapistId,
+        sessionsQuantity,
+        sessionsUsed: 0,
+        sessionsRemaining: sessionsQuantity,
+      });
 
-    // ✅ Incrementar compras en `Program`
-    await Program.findByIdAndUpdate(programId, { $inc: { purchases: 1 } });
+      console.log("✅ Voucher comprado:", newPurchase);
+    }
 
-    // ✅ Asociar la compra al usuario correctamente
-    user.isPatient = true;
-    user.groupProgramPaid = true;
-    user.purchases.push({
-      purchaseId: new mongoose.Types.ObjectId(purchasedProgram._id),
-      purchaseType: "PurchasedProgram",
-    });
+    // ❌ Si `purchaseType` no es válido
+    else {
+      return res.status(400).json({ error: "Tipo de compra no válido" });
+    }
 
+    // ✅ **Actualizar usuario con la compra**
+    user.purchases.push({ purchaseId: newPurchase._id, purchaseType: "PurchasedProgram" }); // 🔹 Guarda el `ObjectId` real
     await user.save();
+
     console.log("✅ Usuario actualizado con la compra:", user.email);
-
-    // ✅ Enviar email de confirmación
-    await sendEmail({
-      to: user.email,
-      subject: "Confirmación de compra",
-      text: `Has adquirido el programa ${program.programName}. Ya tienes acceso a tus sesiones.`,
-    });
-
-    console.log("✅ Email de confirmación enviado a:", user.email);
 
     return res.status(200).json({
       message: "Compra registrada correctamente",
       user,
-      purchasedProgram,
+      newPurchase,
     });
 
   } catch (error) {
     console.error("❌ Error en la confirmación de pago:", error);
-    return res.status(500).json({ message: "Error al procesar la compra" });
+    return res.status(500).json({ message: "Error en la confirmación de pago" });
   }
 }

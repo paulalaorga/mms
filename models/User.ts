@@ -23,9 +23,27 @@ export interface IUser extends Document {
   subscription?: Types.ObjectId;
   idUser?: string;
   tokenUser?: string;
-  purchases?: Types.ObjectId[];
   groupLevel?: string; 
+  paycometUserId?: string;
+  purchases?: {
+    purchaseId: Types.ObjectId;
+    purchaseType: "PurchasedProgram" | "PurchasedSession" | "PurchasedVoucher";
+  }[];
 }
+
+const PurchaseSchema = new Schema({
+  purchaseId: {
+    type: mongoose.Schema.Types.ObjectId,
+    required: true,
+    refPath: "purchases.purchaseType",
+  },
+  purchaseType: {
+    type: String,
+    required: true,
+    enum: ["PurchasedProgram", "PurchasedSession", "PurchasedVoucher"],
+  },
+});
+
 
 const UserSchema = new Schema<IUser>({
   _id: { type: Schema.Types.ObjectId, auto: true },
@@ -55,21 +73,12 @@ const UserSchema = new Schema<IUser>({
   idUser: { type: String, default: null },
   tokenUser: { type: String, default: null },
   groupLevel: { type: String, default: "Fundamental" },
-  purchases: [
+  paycometUserId: { type: String, unique: true, sparse: true },
+  purchases: {
+      type: [PurchaseSchema],
+      },
+},
     {
-      purchaseId: {
-        type: mongoose.Schema.Types.ObjectId,
-        required: true,
-        refPath: "purchaseType",
-      },
-      purchaseType: {
-        type: String,
-        required: true,
-        enum: ["PurchasedProgram", "PurchasedSession", "PurchasedVoucher"], // Modelos válidos
-      },
-    },
-  ],
-}, {
   timestamps: true,
 }
 );
