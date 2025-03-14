@@ -17,6 +17,7 @@ import Badge from "@/components/ui/Badge";
 import PayButton from "@/components/payments/PayButton";
 import { IPurchasedProgram } from "@/models/Purchase";
 import { IProgram } from "@/models/Program";
+import SubscriptionButton from "@/components/payments/SubscribeButton";
 
 export default function UserPrograms() {
   const { data: session, status, update } = useSession();
@@ -24,7 +25,6 @@ export default function UserPrograms() {
   const [isLoading, setIsLoading] = useState(true);
   const [purchasedPrograms, setPurchasedPrograms] = useState<IPurchasedProgram[]>([]);
   const [availablePrograms, setAvailablePrograms] = useState<IProgram[]>([]);
-  const [loadingProgram, setLoadingProgram] = useState<string | null>(null);
 
   const fetchPrograms = async () => {
     setIsLoading(true);
@@ -69,12 +69,12 @@ export default function UserPrograms() {
     await update(); // 🔄 Recargar sesión para asegurarse de que se actualizan los datos
   };
 
-/*   const handleSubscriptionSuccess = async () => {
+   const handleSubscriptionSuccess = async () => {
     console.log("💸 Suscripción completada. Actualizando programas...");
     await fetchPrograms();
     await update(); // 🔄 Recargar sesión para asegurarse de que se actualizan los dato
   };
- */
+ 
 
 
   return (
@@ -223,27 +223,6 @@ export default function UserPrograms() {
                               </Flex>
                               
                               {option.type === "one-time" ? (
-                                <MyButton
-                                  w="full"
-                                  py={2}
-                                  rounded="md"
-                                  fontWeight="medium"
-                                  colorScheme={idx === 0 ? "teal" : undefined}
-                                  variant={idx === 0 ? "primary" : "outline"}
-                                  isLoading={loadingProgram === `${program._id}-${option.type}`}
-                                  loadingText="Procesando..."
-                                  onClick={() => {
-                                    setLoadingProgram(`${program._id}-${option.type}`);
-                                    setTimeout(() => {
-                                      // Usar el componente PayButton pero llamar a su función aquí
-                                      handlePaymentSuccess();
-                                      setLoadingProgram(null);
-                                    }, 1000);
-                                  }}
-                                >
-{/*                                   {option.type === "subscription" ? "Suscribirme" : "Pago único"}
- */}                                </MyButton>
-                              ) : (
                                 <PayButton
                                   _id={program._id}
                                   userName={userName}
@@ -251,6 +230,16 @@ export default function UserPrograms() {
                                   price={option.price}
                                   expirationDate={program.expirationDate}
                                   onPaymentSuccess={handlePaymentSuccess}
+                                />
+                              ) : (
+                                <SubscriptionButton
+                                  _id={program._id}
+                                  userName={userName}
+                                  programName={program.programName}
+                                  price={option.price}
+                                  onSubscriptionSuccess={handleSubscriptionSuccess}
+                                  subscriptionDuration={option.subscriptionDetails?.duration} // Duration in days
+                                  subscriptionRenewalPeriod={option.subscriptionDetails?.renewalPeriod}
                                 />
                               )}
                             </Box>

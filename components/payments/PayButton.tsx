@@ -1,96 +1,122 @@
+// components/payments/PayButton.tsx
 import { useState } from "react";
-import { Button } from "@chakra-ui/react";
+import { Button, useToast } from "@chakra-ui/react";
 import { useSession } from "next-auth/react";
-import { Types } from "mongoose";
 
 interface PayButtonProps {
-  _id: Types.ObjectId;
-  userName: string;
-  programName: string;
+  programId: string;
+  name: string;
   price: number;
-  expirationDate: Date | undefined;
-  onPaymentSuccess?: () => void;
+  paymentType: "subscription" | "one-time";
+  subscriptionDetails?: {
+    periodicity: string;
+    duration: number;
+  };
+ order?: string;
 }
 
-const PayButton: React.FC<PayButtonProps> = ({ _id, userName, programName, price, onPaymentSuccess }) => {
+const PayButton: React.FC<PayButtonProps> = ({
+  programId,
+  price,
+  paymentType,
+  subscriptionDetails,
+  order,
+}) => {
   const { data: session } = useSession();
   const [loading, setLoading] = useState(false);
+  const toast = useToast();
 
   const handlePayment = async () => {
     setLoading(true);
     try {
-      const userId = session?.user?.id || session?.user?.email;
-      
-
-      if (!userId) {
-        alert("⚠️ No se pudo obtener la sesión del usuario. Intenta iniciar sesión de nuevo.");
+      if (!session?.user) {
+        toast({
+          title: "Necesitas iniciar sesión",
+          description: "Por favor, inicia sesión para continuar con el pago",
+          status: "error",
+          duration: 3000,
+          isClosable: true,
+        });
         setLoading(false);
         return;
       }
 
-      const orderCounter = await fetch("/api/payments/generate-order", { method: "POST" });
-      const orderCounterData = await orderCounter.json();
+      // Construimos el body para el endpoint
+      const requestData = {
+        amount: price,
+        programId,
+        name: `${session.user.name} - ${name}`,
+        paymentType,
+        subscriptionDetails,
+        orderId: order || `ORDER_${Date.now()}_${Math.floor(Math.random() * 1000)}`,
+      };
 
-      if (!orderCounterData.orderId) {
-        alert("⚠️ No se pudo generar un número de orden. Inténtalo de nuevo más tarde.");
-        setLoading(false);
-        return;
-      }
-
-      const orderId = orderCounterData.orderId;
-
-      const expirationDate = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000);
-
-      const paymentData = {
-          _id,
-          userId,
-          userName,
-          programName,
-          amount: price,
-          orderId,
-          expirationDate,
-        };
-      console.log("🔹 Datos de pago:", paymentData)
-      
-      const response = await fetch("/api/payments/onepayment", {
+      const response = await fetch("/api/paycomet/initialize", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(paymentData),
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(requestData),
       });
 
       const data = await response.json();
       
-      if (data.payment_url) {
-        window.location.href = data.payment_url;
-
-        await fetch("/api/payments/confirm", {
+      if (data.error) {
+        toast({
+          title: "Error al procesar el pago",
+          description: data.error,
+          status: "error",
+          duration: 5000,
+          isClosable: true,
+        });
+      } else if (data.payment_url) {
+        // Registrar la intención de compra en la base de datos
+        await fetch("/api/subscriptions/create", {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            ...paymentData,
-            paymentUrl: data.payment_url
+            programId,
+            programName: name,
+            amount: price,
+            paymentType,
+            orderId: requestData.orderId,
+            subscriptionDetails
           }),
         });
         
-        if (onPaymentSuccess) onPaymentSuccess();
+        // Redirige al 3DS page de Paycomet
+        window.location.href = data.payment_url;
       } else {
-        alert("⚠️ No se recibió una URL de pago válida.");
+        toast({
+          title: "Respuesta inesperada",
+          description: "No se recibió payment_url del servidor",
+          status: "warning",
+          duration: 3000,
+          isClosable: true,
+        });
       }
     } catch (error) {
-      console.error("❌ Error en el pago único", error);
-      alert("Hubo un problema al iniciar el pago.");
+      console.error("❌ Error en la solicitud de pago", error);
+      toast({
+        title: "Error en el proceso de pago",
+        description: "Hubo un problema al iniciar el pago. Inténtalo de nuevo más tarde.",
+        status: "error",
+        duration: 5000,
+        isClosable: true,
+      });
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <Button onClick={handlePayment} isLoading={loading} colorScheme="teal" size="md" width="100%" mt={4}>
-      Pagar Ahora
+    <Button 
+      onClick={handlePayment} 
+      isLoading={loading} 
+      colorScheme="teal" 
+      size="md" 
+      width="100%" 
+      mt={4}
+    >
+      {paymentType === "one-time" ? "Pagar una vez" : "Suscribirse"}
     </Button>
   );
 };

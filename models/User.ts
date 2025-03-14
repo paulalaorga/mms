@@ -8,12 +8,13 @@ export interface IUser extends Document {
   phone?: string;
   email: string;
   password: string;
+  createdAt?: Date;
+  
   role: string;
   contractSigned?: boolean;
   recoveryContact?: string;
   resetPasswordToken?: string;
   resetPasswordExpires?: number;
-  createdAt?: Date;
   isConfirmed?: boolean;
   confirmationToken?: string;
   isPatient?: boolean;

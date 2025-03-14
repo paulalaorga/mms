@@ -1,6 +1,6 @@
 import { NextApiRequest, NextApiResponse } from "next";
 import dbConnect from "@/lib/mongodb";
-import { getPaymentStatus } from "@/services/paycomet";
+import { getPaymentStatus } from "@/services/paycomet-service";
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   await dbConnect();
