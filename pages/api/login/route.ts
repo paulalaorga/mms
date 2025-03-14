@@ -1,4 +1,4 @@
-import { NextApiRequest, NextApiResponse } from "next";
+/* import { NextApiRequest, NextApiResponse } from "next";
 import connectDB from "../../../lib/mongodb";
 import User from "../../../models/User";
 import { sign } from "jsonwebtoken";
@@ -30,3 +30,4 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   return res.status(200).json({ message: "Inicio de sesión exitoso", role: user.role });
 }
+ */
