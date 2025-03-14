@@ -1,84 +1,76 @@
-// pages/api/paycomet/check-payment.ts
 import { NextApiRequest, NextApiResponse } from "next";
-import axios from "axios";
-
-interface PaycometResponse {
-  errorCode: number;
-  [key: string]: number | string | boolean | null | undefined;
-}
-
-// Type guard personalizado para Axios error
-interface AxiosErrorResponse {
-  response?: {
-    status: number;
-    data: PaycometResponse;
-  };
-}
-
-function isAxiosError(error: unknown): error is AxiosErrorResponse {
-  return typeof error === 'object' && 
-         error !== null && 
-         'response' in error;
-}
+import { getServerSession } from "next-auth";
+import { authOptions } from "../auth/[...nextauth]";
+import connectDB from "@/lib/mongodb";
+import { paycometService, PaycometSearchResponse } from "@/services/paycomet-service";
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== "GET") {
     return res.status(405).json({ error: "Método no permitido" });
   }
 
-  const { order } = req.query;
-
-  if (!order || typeof order !== "string") {
-    return res.status(400).json({ error: "Se requiere un ID de orden válido" });
-  }
-
   try {
-    // Credenciales de Paycomet
-    const PAYCOMET_API_TOKEN = process.env.PAYCOMET_API_KEY;
-    const PAYCOMET_TERMINAL = process.env.PAYCOMET_TERMINAL;
-
-    if (!PAYCOMET_TERMINAL) {
-      throw new Error('PAYCOMET_TERMINAL is not defined');
+    // Verificar autenticación
+    const session = await getServerSession(req, res, authOptions);
+    if (!session) {
+      return res.status(401).json({ error: "No autorizado" });
     }
 
-    const response = await axios.post<PaycometResponse>(
-      `${process.env.PAYCOMET_BASE_URL}v1/payments/${order}/info`,
-      {
-        terminal: parseInt(PAYCOMET_TERMINAL, 10)
-      },
-      {
-        headers: {
-          "Content-Type": "application/json",
-          "PAYCOMET-API-TOKEN": PAYCOMET_API_TOKEN
-        }
+    await connectDB();
+
+    // Obtener parámetro de orden
+    const { order } = req.query;
+
+    if (!order || typeof order !== "string") {
+      return res.status(400).json({ error: "Se requiere un ID de orden válido" });
+    }
+
+    console.log(`🔍 Verificando estado del pago para orden: ${order}`);
+
+    // Consultar a Paycomet por el estado del pago
+    try {
+      const paymentInfo: PaycometSearchResponse = await paycometService.getPayments(order);
+      
+      // Verificar si hay errores en la respuesta
+      if (paymentInfo.errorCode !== 0) {
+        return res.status(400).json({
+          error: "Error al verificar el pago",
+          code: paymentInfo.errorCode,
+          message: paymentInfo.errorMessage || "Error desconocido"
+        });
       }
-    );
 
-    // Comprobar errores en la respuesta de Paycomet
-    if (response.data.errorCode !== 0) {
-      return res.status(400).json({
-        error: "Error en la consulta de Paycomet",
-        code: response.data.errorCode
+      // Si hay resultados de operaciones, tomar el primero (debería ser el único para este orderId)
+      if (paymentInfo.operations && paymentInfo.operations.length > 0) {
+        const payment = paymentInfo.operations[0];
+        
+        // Devolver información del pago en formato simplificado
+        return res.status(200).json({
+          payment: {
+            orderId: payment.order,
+            paycometId: payment.paycometId,
+            amount: payment.amountEur,
+            state: payment.state,
+            stateName: payment.stateName,
+            timestamp: payment.timestamp,
+            // Añadir otros campos necesarios
+          }
+        });
+      } else {
+        return res.status(404).json({ error: "No se encontraron pagos para esta orden" });
+      }
+    } catch (error) {
+      console.error("❌ Error al consultar Paycomet:", error);
+      return res.status(500).json({ 
+        error: "Error al consultar el estado del pago",
+        details: error instanceof Error ? error.message : "Error desconocido"
       });
     }
-
-    // Devolver la información de pago
-    return res.status(200).json(response.data);
-  } catch (error: unknown) {
-    console.error("❌ Error consultando el estado del pago:", error);
-    
-    if (isAxiosError(error) && error.response) {
-      return res.status(error.response.status).json({
-        error: "Error en Paycomet",
-        details: error.response.data
-      });
-    }
-    
-    // Para cualquier otro tipo de error, convertirlo a string seguro
-    const errorMessage = error instanceof Error ? error.message : String(error);
+  } catch (error) {
+    console.error("❌ Error en el servidor:", error);
     return res.status(500).json({ 
       error: "Error interno del servidor",
-      details: errorMessage
+      details: error instanceof Error ? error.message : "Error desconocido"
     });
   }
 }

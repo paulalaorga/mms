@@ -1,26 +1,24 @@
-// components/payments/PayButton.tsx
 import { useState } from "react";
 import { Button, useToast } from "@chakra-ui/react";
 import { useSession } from "next-auth/react";
+import { Types } from "mongoose";
 
 interface PayButtonProps {
-  programId: string;
-  name: string;
+  _id: Types.ObjectId;
+  userName: string;
+  programName: string;
   price: number;
-  paymentType: "subscription" | "one-time";
-  subscriptionDetails?: {
-    periodicity: string;
-    duration: number;
-  };
- order?: string;
+  expirationDate?: Date;
+  order?: string;
+  onPaymentSuccess?: () => void;
 }
 
-const PayButton: React.FC<PayButtonProps> = ({
-  programId,
+const PayButton: React.FC<PayButtonProps> = ({ 
+  _id,
+  userName,
+  programName,
   price,
-  paymentType,
-  subscriptionDetails,
-  order,
+  order
 }) => {
   const { data: session } = useSession();
   const [loading, setLoading] = useState(false);
@@ -41,63 +39,50 @@ const PayButton: React.FC<PayButtonProps> = ({
         return;
       }
 
-      // Construimos el body para el endpoint
-      const requestData = {
-        amount: price,
-        programId,
-        name: `${session.user.name} - ${name}`,
-        paymentType,
-        subscriptionDetails,
-        orderId: order || `ORDER_${Date.now()}_${Math.floor(Math.random() * 1000)}`,
-      };
+      // Crear un ID de orden único si no se proporcionó uno
+      const orderId = order || `ORDER_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
 
+      // Registrar la intención de compra en la base de datos
+      await fetch("/api/subscriptions/create", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          programId: _id,
+          programName,
+          amount: price,
+          paymentType: "one-time",
+          orderId
+        }),
+      });
+
+      // Inicializar el pago con Paycomet
       const response = await fetch("/api/paycomet/initialize", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(requestData),
+        body: JSON.stringify({
+          amount: price,
+          orderId,
+          programId: _id,
+          paymentType: "one-time",
+          description: `Pago por el programa ${programName} de ${userName}`
+        }),
       });
 
       const data = await response.json();
       
       if (data.error) {
-        toast({
-          title: "Error al procesar el pago",
-          description: data.error,
-          status: "error",
-          duration: 5000,
-          isClosable: true,
-        });
+        throw new Error(data.error);
       } else if (data.payment_url) {
-        // Registrar la intención de compra en la base de datos
-        await fetch("/api/subscriptions/create", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            programId,
-            programName: name,
-            amount: price,
-            paymentType,
-            orderId: requestData.orderId,
-            subscriptionDetails
-          }),
-        });
-        
-        // Redirige al 3DS page de Paycomet
+        // Redirige al formulario de pago de Paycomet
         window.location.href = data.payment_url;
       } else {
-        toast({
-          title: "Respuesta inesperada",
-          description: "No se recibió payment_url del servidor",
-          status: "warning",
-          duration: 3000,
-          isClosable: true,
-        });
+        throw new Error("No se recibió URL de pago desde el servidor");
       }
     } catch (error) {
-      console.error("❌ Error en la solicitud de pago", error);
+      console.error("❌ Error en el pago:", error);
       toast({
         title: "Error en el proceso de pago",
-        description: "Hubo un problema al iniciar el pago. Inténtalo de nuevo más tarde.",
+        description: error instanceof Error ? error.message : "Hubo un problema al iniciar el pago",
         status: "error",
         duration: 5000,
         isClosable: true,
@@ -116,7 +101,7 @@ const PayButton: React.FC<PayButtonProps> = ({
       width="100%" 
       mt={4}
     >
-      {paymentType === "one-time" ? "Pagar una vez" : "Suscribirse"}
+      Pagar {price}€
     </Button>
   );
 };

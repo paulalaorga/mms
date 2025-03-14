@@ -1,95 +1,89 @@
-// pages/api/paycomet/initialize.ts
 import type { NextApiRequest, NextApiResponse } from "next";
 import { getServerSession } from "next-auth";
 import { authOptions } from "../auth/[...nextauth]";
-import connectDB from "@/lib/mongodb";
-import UserModel from "@/models/User";
 import { paycometService } from "@/services/paycomet-service";
+import axios, { AxiosError, isAxiosError } from "axios";
 
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse
-) {
-  // 1) Validar método HTTP
+// Define a type for the Paycomet response
+interface PaycometResponse {
+  errorCode?: number;
+  challengeUrl?: string;
+  [key: string]: any;
+}
+
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  // Validate HTTP method
   if (req.method !== "POST") {
     return res.status(405).json({ error: "Método no permitido" });
   }
 
-  // 2) Conectar a la base de datos
   try {
-    await connectDB();
-  } catch (error) {
-    console.error("❌ Error al conectar con MongoDB:", error);
-    return res.status(500).json({
-      error: "No se pudo conectar a la base de datos",
-      details: error instanceof Error ? error.message : "Error desconocido",
-    });
-  }
-
-  // 3) Obtener y validar parámetros
-  try {
-    // Obtener sesión del usuario
+    // Get user session
     const session = await getServerSession(req, res, authOptions);
     
-    // Obtener parámetros del body
+    // Extract payment parameters
     const { 
       amount, 
-      orderId, 
       programId,
+      programName,
       paymentType,
       subscriptionDetails
     } = req.body;
 
-    if (!amount || !orderId) {
-      return res.status(400).json({
-        error: "El monto (amount) y la orden (orderId) son obligatorios."
-      });
+    // Validate required parameters
+    if (!amount) {
+      return res.status(400).json({ error: "El monto es obligatorio" });
     }
 
-    // Validar usuario si hay sesión
-    let userEmail = "invitado@example.com";
-    if (session?.user?.email) {
-      userEmail = session.user.email;
-      const user = await UserModel.findOne({ email: userEmail });
-      
-      if (!user) {
-        console.warn(`⚠️ Usuario no encontrado en BD: ${userEmail}`);
-        // Decidimos continuar aunque el usuario no exista en BD
-      }
-    }
+    // Prepare user email (fallback to a default if not available)
+    const userEmail = session?.user?.email || 'invitado@example.com';
 
-    // 4) Inicializar pago con Paycomet
+    // Generate a unique order ID
+    const orderId = `ORDER_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
+
     try {
-      // Preparar descripción del producto
-      let description = `Pago de ${amount}€`;
-      if (programId) {
-        description += ` para programa ID: ${programId}`;
-      }
-      description += ` (${paymentType === "subscription" ? "Suscripción" : "Pago único"})`;
-
-      // Inicializar pago
-      const paymentUrl = await paycometService.initializePayment({
+      // Initialize payment through Paycomet service
+      const paymentInitialization = await paycometService.initializePayment({
         amount,
         orderId,
         userEmail,
-        description,
-        subscriptionDetails
+        description: programName 
+          ? `Compra de ${programName}` 
+          : `Pago de ${amount}€ para programa ${programId || 'no especificado'}`,
+        subscriptionDetails: paymentType === 'subscription' 
+          ? subscriptionDetails 
+          : undefined
       });
 
-      // 5) Devolver URL de pago al frontend
-      return res.status(200).json({ payment_url: paymentUrl });
-    } catch (error) {
-      console.error("❌ Error al procesar el pago con Paycomet:", error);
-      return res.status(500).json({
-        error: "Error al procesar el pago con Paycomet",
-        details: error instanceof Error ? error.message : "Error desconocido",
+      // Return payment URL to client
+      return res.status(200).json({ 
+        payment_url: paymentInitialization.paymentUrl,
+        orderId 
+      });
+
+    } catch (initError) {
+      console.error('❌ Error al inicializar pago:', initError);
+
+      // Detailed error handling
+      if (isAxiosError(initError)) {
+        const axiosError = initError as AxiosError;
+        return res.status(axiosError.response?.status || 500).json({
+          error: "Error al procesar el pago",
+          details: axiosError.response?.data
+        });
+      }
+
+      // Generic error response
+      return res.status(500).json({ 
+        error: "Error interno al procesar el pago",
+        details: initError instanceof Error ? initError.message : String(initError)
       });
     }
   } catch (error) {
-    console.error("❌ Error general en initialize:", error);
-    return res.status(500).json({
+    console.error('❌ Error general en initialize:', error);
+    return res.status(500).json({ 
       error: "Error general en el servidor",
-      details: error instanceof Error ? error.message : "Error desconocido",
+      details: error instanceof Error ? error.message : String(error)
     });
   }
 }
