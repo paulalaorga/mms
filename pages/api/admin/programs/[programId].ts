@@ -1,7 +1,7 @@
 import { NextApiRequest, NextApiResponse } from "next";
-import dbConnect from "@/lib/mongodb";
-import User from "@/models/User";
-import PurchasedProgram from "@/models/Purchase";
+import dbConnect from "../../../../lib/mongodb.mjs";
+import User from "../../../../models/User.mjs";
+import PurchasedProgram from "../../../../models/Purchase.mjs";
 import { getSession } from "next-auth/react";
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
@@ -15,7 +15,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   // 🔹 Verificar si el usuario es administrador
-  const adminUser = await User.findOne({ email: session.user.email });
+  const adminUser = await User.findOne({ email: session?.user?.email });
   if (!adminUser || adminUser.role !== "admin") {
     return res.status(403).json({ error: "Acceso denegado" });
   }

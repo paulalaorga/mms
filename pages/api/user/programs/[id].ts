@@ -1,8 +1,8 @@
 import { NextApiRequest, NextApiResponse } from "next";
-import dbConnect from "@/lib/mongodb";
-import User, { IUser } from "@/models/User";
-import Program, { IProgram } from "@/models/Program";
-import PurchasedProgram, { IPurchasedProgram } from "@/models/Purchase";
+import dbConnect from "../../../../lib/mongodb.mjs";
+import User from "../../../../models/User.mjs";
+import Program, { IProgram } from "../../../../models/Program";
+import PurchasedProgram from "../../../../models/Purchase.mjs";
 import { getSession } from "next-auth/react";
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {

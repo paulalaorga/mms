@@ -1,10 +1,10 @@
 import { NextApiRequest, NextApiResponse } from "next";
-import connectDB from "@/lib/mongodb";
-import User from "@/models/User";
-import Program from "@/models/Program";
-import PurchasedProgram from "@/models/Purchase";
-import Subscription from "@/models/Subscription";
-import { paycometService } from "@/services/paycomet-service";
+import connectDB from "../../../lib/mongodb.mjs";
+import User from "../../../models/User.mjs";
+import Program from "../../../models/Program";
+import PurchasedProgram from "../../../models/Purchase.mjs";
+import Subscription from "../../../models/Subscription";
+import { paycometService } from "../../../services/paycomet-service";
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== "POST") {

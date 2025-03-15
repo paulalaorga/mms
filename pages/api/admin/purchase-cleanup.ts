@@ -1,31 +1,56 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '../auth/[...nextauth]';
-import mongoose from 'mongoose';
-import dbConnect from '@/lib/mongodb';
-import User from '@/models/User';
-import PurchasedProgram from '@/models/Purchase';
+import dbConnect from '../../../lib/mongodb.mjs';
+import User from '../../../models/User.mjs';
+import PurchasedProgram from '../../../models/Purchase.mjs';
+import { Types } from 'mongoose';
+
+// Define interfaces for our data structures
+interface UserSession {
+  name?: string | null;
+  email?: string | null;
+  image?: string | null;
+  role?: string;
+}
+
+interface Purchase {
+  purchaseId: Types.ObjectId | null;
+  purchaseType: string;
+}
+
+interface UserDocument {
+  _id: Types.ObjectId;
+  email: string;
+  purchases: Purchase[];
+}
+
+interface PurchaseDocument {
+  _id: Types.ObjectId;
+  userId?: Types.ObjectId;
+}
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  // Ensure only admin can access this endpoint
+  if (req.method !== "POST") {
+    return res.status(405).json({ error: "Method not allowed" });
+  }
+
+  await dbConnect();
+  
   const session = await getServerSession(req, res, authOptions);
   
-  if (!session || session.user.role !== 'admin') {
-    return res.status(403).json({ error: 'Acceso no autorizado' });
+  // Use the defined interface for better type safety
+  if (!session || !session.user || (session.user as UserSession).role !== "admin") {
+    return res.status(403).json({ error: "Not authorized" });
   }
-
-  // Only allow POST method
-  if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Método no permitido' });
-  }
-
+  
   try {
     await dbConnect();
 
     // Find users with problematic purchase records
     const usersWithInvalidPurchases = await User.find({
       'purchases.purchaseId': null
-    });
+    }) as UserDocument[];
 
     console.log(`Found ${usersWithInvalidPurchases.length} users with invalid purchases`);
 
@@ -47,21 +72,22 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     // Remove orphaned purchase records
     const orphanedPurchases = await PurchasedProgram.find({
       userId: { $exists: false }
-    });
+    }) as PurchaseDocument[];
 
     console.log(`Found ${orphanedPurchases.length} orphaned purchase records`);
 
     if (orphanedPurchases.length > 0) {
+      // Use proper typing with the interface
       await PurchasedProgram.deleteMany({
-        _id: { $in: orphanedPurchases.map(p => p._id) }
+        _id: { $in: orphanedPurchases.map((p: PurchaseDocument) => p._id) }
       });
     }
 
     // Validate and repair purchase references
-    const users = await User.find({}).populate('purchases.purchaseId');
+    const users = await User.find({}).populate('purchases.purchaseId') as UserDocument[];
     
     for (const user of users) {
-      const validPurchases = [];
+      const validPurchases: Purchase[] = []; // Properly typed array
       
       for (const purchase of user.purchases) {
         if (purchase.purchaseId && purchase.purchaseType === 'PurchasedProgram') {

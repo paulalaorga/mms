@@ -1,9 +1,9 @@
 import { NextApiRequest, NextApiResponse } from "next";
-import dbConnect from "@/lib/mongodb";
-import { getPaymentStatus } from "@/services/paycomet-service";
+import connectDB from "../../../lib/mongodb.mjs";
+import { paycometService } from "../../../services/paycomet-service";
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  await dbConnect();
+  await connectDB();
 
   if (req.method === "GET" || req.method === "POST") {
     const { order } = req.query;
@@ -13,7 +13,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
 
     try {
-      const paymentStatus = await getPaymentStatus(order);
+      // Use the correct method from the service instance
+      const paymentStatus = await paycometService.checkPaymentStatus(order);
       return res.status(200).json(paymentStatus);
     } catch (error) {
       console.error("Error al obtener estado del pago:", error);

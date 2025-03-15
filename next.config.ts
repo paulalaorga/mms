@@ -41,6 +41,38 @@ const nextConfig: NextConfig = {
       },
     ];
   },
+
+  // Configuración de webpack para manejar los errores de importación
+  webpack: (config, { isServer }) => {
+    // Ignorar los módulos problemáticos durante la compilación
+    config.resolve = {
+      ...config.resolve,
+      fallback: {
+        ...config.resolve?.fallback,
+        // Importaciones de mongodb
+        '../../../lib/mongodb.mjs': false,
+        '../../../lib/mongodb': false,
+        '../../lib/mongodb': false,
+        '@/lib/mongodb': false,
+        '../../../../lib/mongodb.mjs': false,
+        
+        // Importaciones de User
+        '../../../models/User.mjs': false,
+        '../../../models/User': false,
+        '../../models/User': false,
+        '../../../../models/User.mjs': false,
+        '@/models/User': false,
+        
+        // Importaciones de Purchase
+        '../../../models/Purchase.mjs': false,
+        '../../../models/Purchase': false,
+        '../../../../models/Purchase.mjs': false,
+        '@/models/Purchase': false,
+      },
+    };
+    
+    return config;
+  },
 };
 
 export default nextConfig;

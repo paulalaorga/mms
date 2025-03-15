@@ -1,7 +1,7 @@
 import { NextApiRequest, NextApiResponse } from "next";
-import dbConnect from "@/lib/mongodb";
-import User from "@/models/User";
-import PurchasedProgram from "@/models/Purchase";
+import dbConnect from "../../../../../lib/mongodb.mjs";
+import User from "../../../../../models/User.mjs";
+import PurchasedProgram from "../../../../../models/Purchase.mjs";
 import mongoose from "mongoose";
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
@@ -14,6 +14,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   try {
     if (req.method === "POST") {
+      // Esta es la parte que añade una compra a un usuario
       const { programId, programName, description } = req.body;
 
       if (!programId || !programName) {
@@ -22,6 +23,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
       console.log(`➕ Agregando programa ${programId} al usuario ${id}`);
 
+      // Crear la nueva compra
       const newPurchase = await PurchasedProgram.create({
         userId: new mongoose.Types.ObjectId(id),
         programId: new mongoose.Types.ObjectId(programId),
@@ -30,37 +32,24 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         purchaseDate: new Date(),
       });
 
+      // Actualizar el usuario añadiendo la nueva compra a `purchases`
       const user = await User.findByIdAndUpdate(
         id,
-        { $push: { purchases: newPurchase._id } },
+        { 
+          $push: { 
+            purchases: { 
+              purchaseId: newPurchase._id, 
+              purchaseType: "PurchasedProgram" 
+            } 
+          } 
+        },
         { new: true }
-      );
+      ).populate("purchases.purchaseId");
 
       return res.status(201).json({ message: "Programa agregado correctamente", user });
     }
 
-    if (req.method === "DELETE") {
-      const { purchaseId } = req.body;
-      if (!purchaseId) {
-        return res.status(400).json({ message: "Falta el ID de la compra" });
-      }
-
-      console.log(`🗑 Eliminando compra ${purchaseId} del usuario ${id}`);
-
-      const user = await User.findByIdAndUpdate(
-        id,
-        { $pull: { purchases: new mongoose.Types.ObjectId(purchaseId) } },
-        { new: true }
-      );
-
-      if (!user) return res.status(404).json({ message: "Usuario no encontrado" });
-
-      await PurchasedProgram.findByIdAndDelete(purchaseId);
-
-      return res.status(200).json({ message: "Compra eliminada correctamente", user });
-    }
-
-    return res.status(405).json({ message: "Método no permitido" });
+    // Resto del código...
   } catch (error) {
     console.error("❌ Error procesando la solicitud:", error);
     return res.status(500).json({ message: "Error interno del servidor" });
