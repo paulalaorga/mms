@@ -13,7 +13,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       // Based on your service implementation, there's no method to get all payments
       // You'll need to implement something like getPaymentsList()
       // For example:
-      const payments = await paycometService.checkPaymentStatus("latest");
+      const payments = await paycometService.getPaymentList();
       // Or if you have a method to list payments:
       // const payments = await paycometService.getPaymentsList();
       

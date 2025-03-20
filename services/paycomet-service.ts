@@ -20,6 +20,52 @@ interface PaycometResponse {
   [key: string]: unknown;
 }
 
+// Define las respuestas de Paycomet
+interface PaycometStatusResponse {
+  payment: {
+    amount: string;
+    amountDisplay: string;
+    amountEur: string;
+    amountEurDisplay: string;
+    authCode: string;
+    bicCode: string;
+    cardBrand: string;
+    cardCategory: string;
+    cardCountry: string;
+    cardType: string;
+    costumerCountry: string;
+    currency: string;
+    errorCode: number;
+    errorDescription: string;
+    issuerBank: string;
+    methodId: string;
+    operationId: number;
+    operationName: string;
+    operationType: number;
+    order: string;
+    originalIp: string;
+    pan: string;
+    paycometId: string;
+    response: string;
+    secure: number;
+    settlementDate: string;
+    state: number;
+    stateName: string;
+    terminal: number;
+    terminalCurrency: string;
+    terminalName: string;
+    timestamp: string;
+    user: string;
+  }
+}
+
+// Payload for Info/Operation
+interface PaycometInfoPayload {
+  payment: {
+    terminal: number;
+  };
+}
+
 interface PaycometSearchResponse {
   errorCode: number;
   errorMessage: string;
@@ -69,6 +115,20 @@ interface PaycometPayload {
   }
 }
 
+interface AxiosErrorResponse {
+  response?: {
+    status: number;
+    data: PaycometResponse | PaycometStatusResponse | PaycometSearchResponse;
+  };
+}
+
+// Type guard customized for Axios errors
+function isAxiosError(error: unknown): error is AxiosErrorResponse {
+  return typeof error === 'object' && 
+         error !== null && 
+         'response' in error;
+}
+
 export class PaycometService {
   private apiUrl: string;
   private apiToken: string;
@@ -85,6 +145,118 @@ export class PaycometService {
     this.urlKo = process.env.PAYCOMET_URL_KO || "";
     this.webhookSecretKey = process.env.PAYCOMET_WEBHOOK_SECRET || "";
   }
+
+  /**
+ * Obtiene información de un pago específico por número de orden
+ */
+async getPaymentInfo(orderId: string): Promise<PaycometStatusResponse> {
+  if (!orderId) {
+    throw new Error("El número de orden es obligatorio.");
+  }
+
+  const payload: PaycometInfoPayload = {
+    payment: {
+      terminal: Number(this.terminal),
+    },
+  };
+
+  try {
+    console.log(`📢 Consultando estado del pago para orden: ${orderId}`);
+
+    const response = await axios.post<PaycometStatusResponse>(
+      `${this.apiUrl}/v1/payments/${orderId}/info`,
+      payload,
+      {
+        headers: {
+          "Content-Type": "application/json",
+          "PAYCOMET-API-TOKEN": this.apiToken,
+        },
+      }
+    );
+
+    console.log("✅ Información del pago recibida:", JSON.stringify(response.data, null, 2));
+    return response.data;
+  } catch (error) {
+    console.error(`❌ Error al consultar información del pago ${orderId}:`, error);
+    
+    if (isAxiosError(error) && error.response) {
+      console.error("Respuesta de error Paycomet:", error.response.data);
+      throw new Error(`Error de Paycomet: ${error.response.status} - ${JSON.stringify(error.response.data)}`);
+    }
+    
+    throw error;
+  }
+}
+
+/**
+ * Obtiene el listado de operaciones/pagos realizados
+ */
+async getPaymentList(fromDate?: Date, toDate?: Date, limit = 100): Promise<PaycometSearchResponse> {
+  const now = new Date();
+  const fiveMonthsAgo = new Date();
+  fiveMonthsAgo.setMonth(fiveMonthsAgo.getMonth() - 5);
+  
+  const formattedToDate = this.formatDateToPaycomet(toDate || now);
+  const formattedFromDate = this.formatDateToPaycomet(fromDate || fiveMonthsAgo);
+  
+  const payload = {
+    currency: "EUR",
+    fromDate: formattedFromDate,
+    toDate: formattedToDate,
+    terminal: Number(this.terminal),
+    operations: [1, 3, 9], // 1 = Authorization, 3 = Preauthorization, 9 = Subscription
+    sortOrder: "DESC",
+    sortType: 1, // Por fecha
+    limit: limit,
+    minAmount: 0,
+    maxAmount: 1000000, // Un millón de euros debería ser suficiente como máximo
+    state: 2, // Todos los estados
+  };
+
+  try {
+    console.log("📢 Consultando listado de pagos en Paycomet:", payload);
+
+    const response = await axios.post<PaycometSearchResponse>(
+      `${this.apiUrl}/v1/payments/search`,
+      payload,
+      {
+        headers: {
+          "Content-Type": "application/json",
+          "PAYCOMET-API-TOKEN": this.apiToken,
+        },
+      }
+    );
+
+    console.log(`✅ Lista de pagos recibida, total: ${response.data?.operations?.length || 0}`);
+    return response.data;
+  } catch (error) {
+    console.error("❌ Error al consultar listado de pagos:", error);
+    
+    if (isAxiosError(error) && error.response) {
+      console.error("Respuesta de error Paycomet:", error.response.data);
+      throw new Error(`Error de Paycomet: ${error.response.status} - ${JSON.stringify(error.response.data)}`);
+    }
+    
+    throw error;
+  }
+}
+
+/**
+ * Formatea una fecha en el formato requerido por Paycomet: YYYYMMDDHHmmss
+ */
+private formatDateToPaycomet(date: Date): string {
+  const pad = (n: number) => n.toString().padStart(2, '0');
+  
+  const year = date.getFullYear().toString();
+  const month = pad(date.getMonth() + 1);
+  const day = pad(date.getDate());
+  const hours = pad(date.getHours());
+  const minutes = pad(date.getMinutes());
+  const seconds = pad(date.getSeconds());
+  
+  return `${year}${month}${day}${hours}${minutes}${seconds}`;
+}
+
 
   /**
    * Initialize a payment with Paycomet

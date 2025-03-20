@@ -14,7 +14,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     try {
       // Use the correct method from the service instance
-      const paymentStatus = await paycometService.checkPaymentStatus(order);
+      const paymentStatus = await paycometService.getPaymentInfo(order);
       return res.status(200).json(paymentStatus);
     } catch (error) {
       console.error("Error al obtener estado del pago:", error);

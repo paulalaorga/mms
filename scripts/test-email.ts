@@ -1,4 +1,4 @@
-import { sendConfirmationEmail } from "../utils/email";
+import { sendConfirmationEmail } from "../utils/email.js";
 
 const testEmail = async () => {
   console.log("🔍 Probando envío de email...");

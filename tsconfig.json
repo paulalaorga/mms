@@ -32,7 +32,7 @@
   "include": [
     "scripts/**/*.ts",
     "models/**/*.ts"
-, "models/User.mts", "models/Purchase.mts"  ],
+, "models/User.ts", "models/Purchase.ts"  ],
   "exclude": [
     "node_modules"
   ]

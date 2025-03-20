@@ -1,5 +1,5 @@
-import connectDB from "../lib/mongodb.mjs";
-import EmailTemplate from "../models/EmailTemplate";
+import connectDB from "../lib/mongodb.js";
+import EmailTemplate from "../models/EmailTemplate.js";
 
 async function insertTemplates() {
   await connectDB();
